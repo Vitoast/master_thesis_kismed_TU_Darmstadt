@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def read_excel_data(file_path):
-    # Read data from Excel file, skipping the first row
+    # Read data from Excel file
     df = pd.read_excel(file_path, skiprows=0)
 
     # Initialize dictionary to store data

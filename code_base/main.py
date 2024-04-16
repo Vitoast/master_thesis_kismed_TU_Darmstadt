@@ -1,12 +1,13 @@
 import read_excel
 import explorational_data_analysis as exp
+import correlation_analysis as cor
 import os
 
 
 def main():
     # Path to Excel file
     excel_file = 'data\\preprocessed_train_data.xlsx'
-    source_dir_path = ''
+    source_dir_path = os.getcwd()
     source_path = os.path.join(source_dir_path, excel_file)
     result_path = os.path.join(source_dir_path, "exploration_results")
 
@@ -14,7 +15,10 @@ def main():
     data_map = read_excel.read_excel_data(source_path)
 
     # Explore data and save results
-    exp.explore_data(data_map, result_path)
+    # exp.explore_data(data_map, result_path)
+
+    # Compute correlation of markers and outcomes
+    cor.compute_marker_correlation(data_map, result_path)
 
     ''' 
     # Print the resulting dictionary
