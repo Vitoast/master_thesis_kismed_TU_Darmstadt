@@ -18,7 +18,9 @@ def main():
     # exp.explore_data(data_map, result_path)
 
     # Compute correlation of markers and outcomes
-    cor.compute_marker_correlation(data_map, result_path)
+    # cor.compute_marker_to_outcome_correlation(data_map, result_path)
+    # cor.compute_marker_correlation_matrix(data_map, result_path)
+    cor.show_pairwise_marker_correlation(data_map, result_path)
 
     ''' 
     # Print the resulting dictionary

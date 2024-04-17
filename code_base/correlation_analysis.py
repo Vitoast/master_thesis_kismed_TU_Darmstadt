@@ -1,14 +1,15 @@
 import os
 
+import pandas as pd
 from scipy import stats
 import explorational_data_analysis as exp
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
+import seaborn as sns
 
 
 # Compute point biserial correlation for each clinical marker
-def compute_marker_correlation(data_dictionary, output_directory):
+def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
     outcome_names, outcome_data = [], []
     marker_names, marker_data = [], []
     correlation_coefficients, p_values = [], []
@@ -71,5 +72,55 @@ def compute_marker_correlation(data_dictionary, output_directory):
             # Save plot as PNG file
             cleaned_feature_name = exp.clean_feature_name(outcome_names[outcome])
             output_file_path = os.path.join(output_directory, f'Correlation of markers with {cleaned_feature_name}.jpg')
+            plt.savefig(output_file_path)
+            plt.close()
+
+
+# Compute and plot the correlation matrix of all the PRE and POST surgery markers
+def compute_marker_correlation_matrix(data_dictionary, output_directory):
+    marker_names, marker_data = [], []
+    for feature_name, feature_data in data_dictionary.items():
+        cleaned_feature_name = exp.clean_feature_name(feature_name)
+        if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
+            marker_names.append(feature_name)
+            marker_data.append(feature_data)
+
+    # Create a pandas DataFrame
+    df = pd.DataFrame(np.transpose(marker_data), columns=marker_names)
+
+    # Compute the correlation matrix
+    corr_matrix = df.corr(method='spearman')
+
+    # Plot the correlation matrix using a heatmap
+    plt.figure(figsize=(30, 25))
+    sns.heatmap(corr_matrix, annot=True, fmt=".2f")
+    plt.title('Correlation Matrix of Clinical Markers')
+    # Save plot as PNG file
+    output_file_path = os.path.join(output_directory, f'Correlation matrix of clinical markers.jpg')
+    plt.savefig(output_file_path)
+    plt.close()
+
+
+def show_pairwise_marker_correlation(data_dictionary, output_directory):
+    for category in ['PRE', 'POST']:
+        for outcome in range(1, 5):
+            marker_names, marker_data = [], []
+            counter = 0
+            for feature_name, feature_data in data_dictionary.items():
+                if counter == outcome:
+                    marker_data.append(feature_data)
+                    marker_names.append(feature_name)
+                cleaned_feature_name = exp.clean_feature_name(feature_name)
+                if cleaned_feature_name.endswith(category):
+                    marker_names.append(feature_name)
+                    marker_data.append(feature_data)
+                counter += 1
+            # Create a pandas DataFrame
+            df = pd.DataFrame(np.transpose(marker_data), columns=marker_names)
+
+            sns.pairplot(df, vars=df.columns[1:],  kind='kde', plot_kws=dict(levels=2), hue=marker_names[0])
+            # Save plot as PNG file
+            cleaned_feature_name = exp.clean_feature_name(marker_names[0])
+            output_file_path = os.path.join(output_directory, f'Pairwise plotting of clinical {category} markers regarding{cleaned_feature_name}.jpg')
             plt.savefig(output_file_path)
             plt.close()
