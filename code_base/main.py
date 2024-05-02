@@ -1,6 +1,7 @@
 import read_excel
 import explorational_data_analysis as exp
 import correlation_analysis as cor
+import preprocess_data as pre
 import os
 
 
@@ -20,7 +21,10 @@ def main():
     # Compute correlation of markers and outcomes
     # cor.compute_marker_to_outcome_correlation(data_map, result_path)
     # cor.compute_marker_correlation_matrix(data_map, result_path)
-    cor.show_pairwise_marker_correlation(data_map, result_path)
+    # cor.show_pairwise_marker_correlation(data_map, result_path)
+
+    # Preprocess data for classification
+    pre.preprocess_data(data_map)
 
     ''' 
     # Print the resulting dictionary
