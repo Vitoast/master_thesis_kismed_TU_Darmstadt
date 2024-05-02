@@ -15,6 +15,12 @@ def main():
     # Read data from Excel file
     data_map = read_excel.read_excel_data(source_path)
 
+    # Preprocess data for exploration
+    standardize, impute, filter_outliers = True, True, False
+    pre.preprocess_data(data_map, standardize=standardize, impute=impute, filter_outliers=filter_outliers)
+    if standardize or impute:
+        result_path = os.path.join(source_dir_path, "standardized_exploration_results")
+
     # Explore data and save results
     # exp.explore_data(data_map, result_path)
 
@@ -22,9 +28,6 @@ def main():
     # cor.compute_marker_to_outcome_correlation(data_map, result_path)
     # cor.compute_marker_correlation_matrix(data_map, result_path)
     # cor.show_pairwise_marker_correlation(data_map, result_path)
-
-    # Preprocess data for classification
-    pre.preprocess_data(data_map)
 
     ''' 
     # Print the resulting dictionary
