@@ -6,28 +6,33 @@ import os
 
 
 def main():
-    # Path to Excel file
-    excel_file = 'data\\preprocessed_train_data.xlsx'
+    # Path to Excel files with training and test data
+    train_excel_file = 'data\\preprocessed_train_data.xlsx'
+    test_excel_file = 'data\\preprocessed_test_data.xlsx'
     source_dir_path = os.getcwd()
-    source_path = os.path.join(source_dir_path, excel_file)
+    train_source_path = os.path.join(source_dir_path, train_excel_file)
+    test_source_path = os.path.join(source_dir_path, test_excel_file)
     result_path = os.path.join(source_dir_path, "exploration_results")
 
     # Read data from Excel file
-    data_map = read_excel.read_excel_data(source_path)
+    train_data_map = read_excel.read_excel_data(train_source_path)
+    test_data_map = read_excel.read_excel_data(test_source_path)
 
     # Preprocess data for exploration
     standardize, impute, filter_outliers = True, True, False
-    pre.preprocess_data(data_map, standardize=standardize, impute=impute, filter_outliers=filter_outliers)
+    pre.preprocess_data(train_data_map, [], standardize=standardize, impute=impute, filter_outliers=filter_outliers)
+    pre.preprocess_data(test_data_map, train_data_map, standardize=standardize, impute=impute, filter_outliers=False)
     if standardize or impute:
         result_path = os.path.join(source_dir_path, "standardized_exploration_results")
 
     # Explore data and save results
-    # exp.explore_data(data_map, result_path)
+    exp.check_data_sets(train_data_map, test_data_map)
+    # exp.explore_data(train_data_map, result_path)
 
     # Compute correlation of markers and outcomes
-    # cor.compute_marker_to_outcome_correlation(data_map, result_path)
-    # cor.compute_marker_correlation_matrix(data_map, result_path)
-    # cor.show_pairwise_marker_correlation(data_map, result_path)
+    # cor.compute_marker_to_outcome_correlation(train_data_map, result_path)
+    # cor.compute_marker_correlation_matrix(train_data_map, result_path)
+    # cor.show_pairwise_marker_correlation(train_data_map, result_path)
 
     ''' 
     # Print the resulting dictionary

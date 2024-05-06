@@ -87,3 +87,16 @@ def explore_data(data_dictionary, output_directory):
                 # Save mean and variance to text file
                 stats_file.write(f'{feature_name}: Mean: {mean}, Median: {median}, Variance: {var}, Data Points: {len(cleaned_data)}, Min Value: {minimum}, Max Value: {maximum}\n')
 
+
+# Check that the data sets are suitable for classification
+def check_data_sets(train_map, test_map):
+    for (feature_name_train, feature_data_train), (feature_name_test, feature_data_test) in zip(train_map.items(), test_map.items()):
+        # Check if data is usable for classification
+        if not np.isfinite(feature_data_train).all():
+            print(feature_name_train, " in train set is not formatted for classification.")
+        if not np.isfinite(feature_data_test).all():
+            print(feature_name_test, " in test set is not formatted for classification.")
+        # Check if features are at the same place
+        if feature_name_train != feature_name_test:
+            print("The features in the sets do not match: ", feature_name_train, " ", feature_name_test)
+            break
