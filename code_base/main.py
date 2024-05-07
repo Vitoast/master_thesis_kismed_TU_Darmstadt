@@ -37,7 +37,10 @@ def main():
 
     # Train classifier and predict
     # clf.classify_naive_bayes(train_data_map, test_data_map, result_path)
-    clf.classify_linear_regression(train_data_map, test_data_map, result_path)
+    # clf.classify_linear_regression(train_data_map, test_data_map, result_path)
+    # clf.classify_decision_tree(train_data_map, test_data_map, result_path)
+    # clf.classify_svm(train_data_map, test_data_map, result_path)
+    clf.classify_random_forest(train_data_map, test_data_map, result_path)
 
     ''' 
     # Print the resulting dictionary
