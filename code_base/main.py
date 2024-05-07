@@ -2,6 +2,7 @@ import read_excel
 import explorational_data_analysis as exp
 import correlation_analysis as cor
 import preprocess_data as pre
+import classification as clf
 import os
 
 
@@ -33,6 +34,10 @@ def main():
     # cor.compute_marker_to_outcome_correlation(train_data_map, result_path)
     # cor.compute_marker_correlation_matrix(train_data_map, result_path)
     # cor.show_pairwise_marker_correlation(train_data_map, result_path)
+
+    # Train classifier and predict
+    # clf.classify_naive_bayes(train_data_map, test_data_map, result_path)
+    clf.classify_linear_regression(train_data_map, test_data_map, result_path)
 
     ''' 
     # Print the resulting dictionary
