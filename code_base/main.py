@@ -61,7 +61,17 @@ def main():
         clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[2])
         clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[3])
         clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[4])
-    # if validation_method == 'k_fold' or validation_method == 'leave_one_out':
+    if validation_method == 'k_fold':
+        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+                            classifiers[0])
+        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+                            classifiers[1])
+        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+                            classifiers[2])
+        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+                            classifiers[3])
+        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+                            classifiers[4])
 
     ''' 
     # Print the resulting dictionary
