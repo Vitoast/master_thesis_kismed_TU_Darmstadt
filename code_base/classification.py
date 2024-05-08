@@ -19,15 +19,15 @@ result_file_name = "classification_results.xlsx"
 
 
 # Provides functionality to extract x and y train and test series from dictionaries
-def split_maps(train_map, test_map, outcome):
+def split_maps(train_map, test_map):
     feature_count = 0
     x_train, y_train = [], []
     for feature_name, feature_data in train_map.items():
         # Outcomes are first 4 columns, use them as y
-        if feature_count == outcome:
-            y_train = feature_data
+        if feature_count in range(4):
+            y_train.append(feature_data)
         # Rest is X
-        if feature_count > 3:
+        else:
             x_train.append(feature_data)
         feature_count += 1
 
@@ -35,10 +35,10 @@ def split_maps(train_map, test_map, outcome):
     x_test, y_test = [], []
     for feature_name, feature_data in test_map.items():
         # Outcomes are first 4 columns, use them as y
-        if feature_count == outcome:
-            y_test = feature_data
+        if feature_count in range(4):
+            y_test.append(feature_data)
         # Rest is X
-        if feature_count > 3:
+        else:
             x_test.append(feature_data)
         feature_count += 1
 
@@ -67,9 +67,12 @@ def save_results_to_file(accuracy, result_path, classification_descriptor, param
     result_file = os.path.join(result_path, result_file_name)
     # If the file does not exist, create it and add a first column with descriptors of the rows plus data column
     if not os.path.exists(result_file):
+        str_parameters = [str(num) for num in parameter_descriptor]
+        str_accuracies = [str(num) for num in accuracy]
         df = pd.DataFrame({
-            'Configuration': (['Classifier', 'Standardized', 'Imputed', 'Outlier_Filtered'] + outcome_descriptors),
-            classification_descriptor: (parameter_descriptor + accuracy),
+            'Configuration': (['Classifier', 'Standardized', 'Imputed', 'Outlier_Filtered', 'k-folds']
+                              + outcome_descriptors),
+            classification_descriptor: (str_parameters + str_accuracies),
         })
     # Otherwise read file only add new column
     else:
@@ -78,19 +81,31 @@ def save_results_to_file(accuracy, result_path, classification_descriptor, param
         if classification_descriptor not in df.columns:
             df[classification_descriptor] = pd.NA
         # Overwrite data in column
-        df[classification_descriptor][:len(parameter_descriptor + accuracy)] = (parameter_descriptor + accuracy)
+        str_parameters = [str(num) for num in parameter_descriptor]
+        str_accuracies = [str(num) for num in accuracy]
+        df[classification_descriptor][:len(str_parameters + str_accuracies)] = (str_parameters + str_accuracies)
     df.to_excel(result_file, index=False)
 
 
 # Classify for each outcome with a naive Bayesian classifier
-def classify(train_data_map, test_data_map, result_path, parameter_descriptor, classification_descriptor):
-    accuracy_results = []
-    parameter_descriptor = [classification_descriptor] + parameter_descriptor
+def classify(train_data_map, test_data_map, result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
+    x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map)
+    # Create unique identifier for current model
     model_descriptor = ''
+    parameter_descriptor = [classification_descriptor] + parameter_descriptor + [0]
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
+    # Train model and predict
+    accuracy_results = classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_data_map,
+                                         result_path, parameter_descriptor, classification_descriptor, print_model_details)
+    # Save results and return accuracy
+    save_results_to_file(accuracy_results, result_path, model_descriptor, parameter_descriptor)
+
+
+def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_data_map,
+                      result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
+    accuracy_results = []
     # Fit model, predict and evaluate accuracy for each outcome
     for outcome in range(4):
-        x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map, outcome)
         # Choose desired classifier
         classifier = GaussianNB()
         if classification_descriptor == 'LinearRegression': classifier = LinearRegression()
@@ -98,44 +113,73 @@ def classify(train_data_map, test_data_map, result_path, parameter_descriptor, c
         elif classification_descriptor == 'SVM': classifier = SVC()
         elif classification_descriptor == 'RandomForest': classifier = RandomForestClassifier()
         # Fit model and predict on test set
-        classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
+        classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train[outcome])
         y_pred = classifier.predict(np.reshape(x_test, (len(x_test[0]), len(x_test))))
         # In case of regression extract classes from prediction
         if classification_descriptor == 'LinearRegression':
             predictions_class = [1 if pred >= 0.5 else 0 for pred in y_pred]
-            accuracy_results.append(accuracy_score(y_test, predictions_class))
+            accuracy_results.append(accuracy_score(y_test[outcome], predictions_class))
         else:
-            accuracy_results.append(accuracy_score(y_test, y_pred))
+            accuracy_results.append(accuracy_score(y_test[outcome], y_pred))
         # Compute error measures
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        mse = mean_squared_error(y_test[outcome], y_pred)
+        r2 = r2_score(y_test[outcome], y_pred)
         # Print out information about the classification model
-        if classification_descriptor == 'NaiveBayes':
-            print(outcome_descriptors[outcome], " prediction accuracy of naive Bayes: ", accuracy_results[outcome])
-            print("    Class prior probabilities:", classifier.class_prior_)
-        elif classification_descriptor == 'LinearRegression':
-            print(outcome_descriptors[outcome], " Linear Regression: MSE ", mse, "R^2 ", r2, " prediction accuracy: ",
-                  accuracy_results[outcome])
-        elif classification_descriptor == 'DecisionTree':
-            print(outcome_descriptors[outcome], " prediction accuracy of Decision Tree: ", accuracy_results[outcome])
-            print("    Maximum Depth: ", classifier.get_depth(), "Number of Leaves:", classifier.get_n_leaves())
-            feature_importances = classifier.feature_importances_
-            print_feature_importances_of_forests(train_data_map, feature_importances)
-            print("")
-        elif classification_descriptor == 'SVM':
-            print(outcome_descriptors[outcome], " prediction accuracy of SVM: ", accuracy_score(y_test, y_pred))
-        elif classification_descriptor == 'RandomForest':
-            print(outcome_descriptors[outcome], " prediction accuracy of Random Forest: ",
-                  accuracy_results[outcome])
-            print("    Max Depth of Trees:", classifier.max_depth, "Number of Trees:", len(classifier.estimators_))
-            feature_importances = classifier.feature_importances_
-            print_feature_importances_of_forests(train_data_map, feature_importances)
-    # Save results and return accuracy
-    save_results_to_file(accuracy_results, result_path, model_descriptor, parameter_descriptor)
+        if print_model_details:
+            if classification_descriptor == 'NaiveBayes':
+                print(outcome_descriptors[outcome], " prediction accuracy of naive Bayes: ", accuracy_results[outcome])
+                print("    Class prior probabilities:", classifier.class_prior_)
+            elif classification_descriptor == 'LinearRegression':
+                print(outcome_descriptors[outcome], " Linear Regression: MSE ", mse, "R^2 ", r2, " prediction accuracy: ",
+                      accuracy_results[outcome])
+            elif classification_descriptor == 'DecisionTree':
+                print(outcome_descriptors[outcome], " prediction accuracy of Decision Tree: ", accuracy_results[outcome])
+                print("    Maximum Depth: ", classifier.get_depth(), "Number of Leaves:", classifier.get_n_leaves())
+                feature_importances = classifier.feature_importances_
+                print_feature_importances_of_forests(train_data_map, feature_importances)
+                print("")
+            elif classification_descriptor == 'SVM':
+                print(outcome_descriptors[outcome], " prediction accuracy of SVM: ", accuracy_results[outcome])
+            elif classification_descriptor == 'RandomForest':
+                print(outcome_descriptors[outcome], " prediction accuracy of Random Forest: ",
+                      accuracy_results[outcome])
+                print("    Max Depth of Trees:", classifier.max_depth, "Number of Trees:", len(classifier.estimators_))
+                feature_importances = classifier.feature_importances_
+                print_feature_importances_of_forests(train_data_map, feature_importances)
     return accuracy_results
 
 
 # Classify with using k-fold cross validation
-def classify_k_fold(train_data_map, test_data_map, result_path, parameter_descriptor, classification_descriptor):
+def classify_k_fold(data_map, result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
     k_fold_split = 5
     kf = KFold(n_splits=k_fold_split)
+    # Extract x and y from map
+    x, y = [], []
+    # Convert map into processable x and y
+    feature_count = 0
+    for feature_name, feature_data in data_map.items():
+        # Outcomes are first 4 columns, use them as y
+        if feature_count in range(4):
+            y.append(feature_data)
+        # Rest is X
+        else:
+            x.append(feature_data)
+        feature_count += 1
+    # Create unique identifier for current model
+    model_descriptor = ''
+    parameter_descriptor = [classification_descriptor] + parameter_descriptor + [k_fold_split]
+    for parameter in parameter_descriptor: model_descriptor += str(parameter)
+    # Store accuracy results here
+    accuracy_results = []
+    # Train and evaluate the model for each fold
+    for i, (train_index, test_index) in enumerate(kf.split(x)):
+        # current_x = x[:, train_index]
+        current_train_x = [[arr[i] for i in train_index] for arr in x]
+        current_train_y = [[arr[i] for i in train_index] for arr in y]
+        current_test_x = [[arr[i] for i in test_index] for arr in x]
+        current_test_y = [[arr[i] for i in test_index] for arr in y]
+        accuracy = classify_internal(current_train_x, current_test_x, current_train_y, current_test_y, data_map, [],
+                                     result_path, parameter_descriptor, classification_descriptor, print_model_details)
+        accuracy_results.append(accuracy)
+    # Save average accuracy to file
+    save_results_to_file(np.mean(accuracy_results, axis=0), result_path, model_descriptor, parameter_descriptor)

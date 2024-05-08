@@ -5,7 +5,6 @@ import preprocess_data as pre
 import classification as clf
 import os
 
-
 classifiers = ['NaiveBayes', 'LinearRegression', 'DecisionTree', 'SVM', 'RandomForest']
 
 
@@ -33,7 +32,8 @@ def main():
     #       'k_fold' for k-set cross validation and 'leave_one_out' for n-point cross validation
     standardize, impute, filter_outliers, validation_method = True, True, True, 'hold_out'
     if validation_method == 'hold_out':
-        pre.preprocess_data(train_data_map, [], standardize=standardize, impute=impute, filter_outliers=filter_outliers)
+        pre.preprocess_data(train_data_map, [], standardize=standardize, impute=impute,
+                            filter_outliers=filter_outliers)
         pre.preprocess_data(test_data_map, train_data_map, standardize=standardize, impute=impute,
                             filter_outliers=False)
     if validation_method == 'k_fold' or validation_method == 'leave_one_out':
@@ -55,23 +55,18 @@ def main():
     # Train classifier and predict
     classification_result_path = os.path.join(result_path, "classification_results")
     parameter_descriptor = [standardize, impute, filter_outliers]
+    # Turn this on to retrieve model configuration
+    print_model_details = True
+
     if validation_method == 'hold_out':
-        clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[0])
-        clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[1])
-        clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[2])
-        clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[3])
-        clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor, classifiers[4])
-    if validation_method == 'k_fold':
-        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-                            classifiers[0])
-        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-                            classifiers[1])
-        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-                            classifiers[2])
-        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-                            classifiers[3])
-        clf.classify_k_fold(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-                            classifiers[4])
+        for model in classifiers:
+            clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+                         model, print_model_details)
+
+    # if validation_method == 'k_fold':
+    #     for model in classifiers:
+    #         clf.classify_k_fold(complete_data_map, classification_result_path, parameter_descriptor,
+    #                             model, print_model_details)
 
     ''' 
     # Print the resulting dictionary
