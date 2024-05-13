@@ -7,6 +7,10 @@ import pandas as pd
 from collections import Counter
 
 
+# Number of adverse outcomes in data set
+number_outcomes = 5
+
+
 def clean_feature_name(feature_name):
     # Remove invalid characters from feature name for Windows file system
     cleaned_name = re.sub(r'[<>:"/\\|?*]', '_', feature_name)
@@ -52,7 +56,7 @@ def explore_data(data_dictionary, output_directory):
                     plt.xlabel('Outcome')
                     plt.ylabel('Occurences')
 
-                    if feature_count < 5:
+                    if feature_count < number_outcomes:
                         output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.png')
                     else:
                         output_file_path = os.path.join(clinical_data_directory, f'bar_{cleaned_feature_name}.png')       

@@ -30,7 +30,7 @@ def main():
     #   For outlier filtering a threshold can be chosen
     #   For validation you can choose 'hold_out' for standard 80/20 distribution,
     #       'k_fold' for k-set cross validation and 'leave_one_out' for n-point cross validation
-    standardize, impute, filter_outliers, validation_method = True, True, True, 'hold_out'
+    standardize, impute, filter_outliers, validation_method = True, True, False, 'k_fold'
     if validation_method == 'hold_out':
         pre.preprocess_data(train_data_map, [], standardize=standardize, impute=impute,
                             filter_outliers=filter_outliers)
@@ -47,26 +47,26 @@ def main():
     # else:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
 
-    # Compute correlation of markers and outcomes
-    # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "exploration_results"))
-    # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "exploration_results"))
-    # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "exploration_results"))
+    # Compute correlation metrics
+    # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
+    # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "correlation_results"))
+    # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
 
     # Train classifier and predict
     classification_result_path = os.path.join(result_path, "classification_results")
     parameter_descriptor = [standardize, impute, filter_outliers]
     # Turn this on to retrieve model configuration
-    print_model_details = True
+    print_model_details = False
 
-    if validation_method == 'hold_out':
-        for model in classifiers:
-            clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-                         model, print_model_details)
-
-    # if validation_method == 'k_fold':
+    # if validation_method == 'hold_out':
     #     for model in classifiers:
-    #         clf.classify_k_fold(complete_data_map, classification_result_path, parameter_descriptor,
-    #                             model, print_model_details)
+    #         clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
+    #                      model, print_model_details)
+
+    if validation_method == 'k_fold':
+        for model in classifiers:
+            clf.classify_k_fold(complete_data_map, classification_result_path, parameter_descriptor,
+                                model, print_model_details)
 
     ''' 
     # Print the resulting dictionary
