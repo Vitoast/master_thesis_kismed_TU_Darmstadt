@@ -93,7 +93,7 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
 
 # Classify for each outcome with a naive Bayesian classifier
 def classify(train_data_map, test_data_map, result_path, parameter_descriptor, classification_descriptor,
-             print_model_details=False):
+             print_model_details=False, save_model_details=True):
     x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map)
     # Create unique identifier for current model
     model_descriptor = ''
@@ -104,7 +104,9 @@ def classify(train_data_map, test_data_map, result_path, parameter_descriptor, c
                                                     result_path, parameter_descriptor, classification_descriptor,
                                                     print_model_details)
     # Save results and return accuracy
-    save_results_to_file(accuracy_results, f1_scores, result_path, model_descriptor, parameter_descriptor)
+    if save_model_details:
+        save_results_to_file(accuracy_results, f1_scores, result_path, model_descriptor, parameter_descriptor)
+    return accuracy_results, f1_scores
 
 
 def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_data_map,
@@ -162,7 +164,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
 
 
 # Classify with using k-fold cross validation
-def classify_k_fold(data_map, result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
+def classify_k_fold(data_map, result_path, parameter_descriptor, classification_descriptor, print_model_details=False, save_model_details=True):
     k_fold_split = 5
     kf = KFold(n_splits=k_fold_split)
     # Extract x and y from map
@@ -198,5 +200,6 @@ def classify_k_fold(data_map, result_path, parameter_descriptor, classification_
         accuracy_results.append(accuracy_value)
         f1_score_results.append(f1_score_value)
     # Save average accuracy to file
-    save_results_to_file(np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0), result_path, model_descriptor,
-                         parameter_descriptor)
+    if save_model_details:
+        save_results_to_file(np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0), result_path, model_descriptor,
+                             parameter_descriptor)

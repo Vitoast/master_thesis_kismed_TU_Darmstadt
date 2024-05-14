@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 from scipy import stats
 import explorational_data_analysis as exp
@@ -114,7 +113,7 @@ def compute_marker_correlation_matrix(data_dictionary, output_directory):
 
 def show_pairwise_marker_correlation(data_dictionary, output_directory):
     for category in ['PRE', 'POST']:
-        for outcome in range(1, 5):
+        for outcome in range(1, number_outcomes):
             marker_names, marker_data = [], []
             counter = 0
             for feature_name, feature_data in data_dictionary.items():
