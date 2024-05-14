@@ -27,14 +27,19 @@ def check_feature_variance_inflation(train_data_map, result_path):
 
 
 def perform_ablation_study(train_data_map, test_data_map, result_path, classifiers):
+    removed_features = []
+    accuracies_per_model, f1_scores_per_model = np.empty(len(classifiers)), np.empty(len(classifiers))
     for feature in train_data_map.keys():
         # Compute Variance Inflation Factors for each feature and remove the highest from the data set
         worst_feature, vifs = check_feature_variance_inflation(train_data_map, result_path)
         print(f'Remove from training data', worst_feature['feature'])
         train_data_map.pop(worst_feature['feature'])
         test_data_map.pop(worst_feature['feature'])
+        removed_features.append(worst_feature['feature'])
         # Then perform classification with all models and evaluate the performance
         for model in classifiers:
             accuracy_results, f1_scores = clf.classify(train_data_map, test_data_map, result_path, [],
                                                        model, False, False)
+            accuracies_per_model[classifiers.index(model)].append(accuracy_results)
+            f1_scores_per_model[classifiers.index(model)].append(f1_scores)
             # Save and plot results
