@@ -69,7 +69,11 @@ def main():
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
-    fe.perform_ablation_study(train_source_path, test_data_map, feature_evaluation_result_path, classifiers)
+    fe.perform_ablation_study(train_data_map, test_data_map, feature_evaluation_result_path, classifiers)
+    # accuracies_per_model = [[0.5, 0.3, 0.6], [0.8, 0.3, 0.6], [0.5, 0.3, 0.7], [0.8, 0.3, 0.7], [0.5, 0.3, 0.7]]
+    # f1_scores_per_model = [[0.2, 0.2, 0.1], [0.1, 0.2, 0.1], [0.05, 0.2, 0.1], [0.2, 0.6, 0.1], [0.2, 0.8, 0.1]]
+    # removed_features = ['1', '2', '3']
+    # fe.plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, removed_features, result_path, classifiers, 'test')
 
     ''' 
     # Print the resulting dictionary
