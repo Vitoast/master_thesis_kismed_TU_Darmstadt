@@ -11,13 +11,12 @@ def filter_by_z_score(data, center, threshold):
 
 # Preprocess data to make it usable in classification
 # Involves: Imputation of missing values, standardization and (outlier filtering)
-def preprocess_data(data_dictionary, preprocessed_train_data, standardize, impute, filter_outliers):
+def preprocess_data(data_dictionary, standardize, impute, z_score_threshold):
     # Create imputation instance to replace nan values in data
     imputer = SimpleImputer(missing_values=np.nan, strategy='median')
     scaler = StandardScaler()
     # Threshold for outlier filtering, all values further away than threshold * std_deviation from median are abandoned
-    filter_threshold = 10
-    feature_to_remove, points_to_remove = [], []
+    feature_to_remove = []
     remove_points_mask = np.ones(len(data_dictionary['ID']), dtype=bool)
     for feature_name, feature_data in data_dictionary.items():
         if not any(isinstance(elem, str) for elem in feature_data):
@@ -27,15 +26,15 @@ def preprocess_data(data_dictionary, preprocessed_train_data, standardize, imput
             if not np.all(np.isin(feature_data, [0, 1])):
                 if standardize:
                     data_dictionary[feature_name] = np.reshape(scaler.fit_transform(np.reshape(data_dictionary[feature_name], (-1, 1))), (-1,))
-                if filter_outliers:
-                    remove_points_mask &= filter_by_z_score(data_dictionary[feature_name], np.median(data_dictionary[feature_name]), filter_threshold)
+                if z_score_threshold > 0:
+                    remove_points_mask &= filter_by_z_score(data_dictionary[feature_name], np.median(data_dictionary[feature_name]), z_score_threshold)
         else:
             feature_to_remove.append(feature_name)
     # Remove all the features that are not suitable for classification
     for name in feature_to_remove:
         data_dictionary.pop(name)
     # Remove patients with invalid outlying points from the feature set
-    if filter_outliers:
+    if z_score_threshold > 0:
         for feature_name, feature_data in data_dictionary.items():
             data_dictionary[feature_name] = feature_data[remove_points_mask]
-        # print('number of points removed', np.count_nonzero(np.invert(remove_points_mask)), 'with threshold', filter_threshold)
+        # print('number of points removed', np.count_nonzero(np.invert(remove_points_mask)), 'with threshold', z_score_threshold)

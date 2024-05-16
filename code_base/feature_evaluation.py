@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import explorational_data_analysis as exp
 
 number_outcomes = 5
 # Values to print names of adverse outcomes
@@ -17,11 +18,11 @@ def save_results_to_file(classifiers, accuracies, f1_scores, result_path, remove
     if not os.path.exists(result_path):
         df = pd.DataFrame({
             'Removed_Feature': model_descriptors,
-            removed_feature_descriptor: (accuracies + f1_scores)
+            removed_feature_descriptor: np.concatenate((accuracies, f1_scores))
         })
     else:
         df = pd.read_excel(result_path)
-        df[removed_feature_descriptor] = (accuracies + f1_scores)
+        df[removed_feature_descriptor] = np.concatenate((accuracies, f1_scores))
     df.to_excel(result_path, index=False)
 
 
@@ -46,7 +47,6 @@ def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, rem
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(result_path)
-    plt.show()
     plt.close()
 
 
@@ -95,7 +95,7 @@ def perform_ablation_study(train_data_map, test_data_map, result_directory, clas
         for feature_count in range(0, len(train_data_map.keys()) - 10):
             # Compute Variance Inflation Factors for each feature and get highest
             worst_feature, vifs = check_feature_variance_inflation(train_data_map, result_path)
-            print(f'Remove from training data:', worst_feature['feature'], " with vif:", worst_feature['VIF'], ", features left:", len(train_data_map) -1)
+            print(f'Remove from training data:', worst_feature['feature'], "with vif:", worst_feature['VIF'], ", features left:", len(train_data_map) -1)
             # Eliminate feature
             train_data_map.pop(worst_feature['feature'])
             test_data_map.pop(worst_feature['feature'])
@@ -111,8 +111,13 @@ def perform_ablation_study(train_data_map, test_data_map, result_directory, clas
                     f1_scores_per_outcome[outcome_value][classifiers.index(model)].append(f1_scores[outcome_value])
             # Save results
             for outcome in range(number_outcomes):
-                save_results_to_file(classifiers, accuracy_results, f1_scores,
-                                     outcome_result_paths[outcome] + '.xlsx', worst_feature['feature'])
+                # Extract current values of iteration from overall scores
+                temp_accuracies = []
+                for val in accuracies_per_outcome[outcome]: temp_accuracies.append(val[feature_count])
+                temp_f1_scores = []
+                for val in f1_scores_per_outcome[outcome]: temp_f1_scores.append(val[feature_count])
+                save_results_to_file(classifiers, temp_accuracies, temp_f1_scores,
+                                     outcome_result_paths[outcome] + '.xlsx', exp.clean_feature_name(worst_feature['feature']))
             stats_file.write(f"{worst_feature['feature']},{worst_feature['VIF']},")
     # Plot resulting f1 score curve for each outcome and model
     for outcome in range(number_outcomes):
