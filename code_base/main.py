@@ -6,8 +6,7 @@ import classification as clf
 import feature_evaluation as fe
 import parameter_evaluation as pe
 import os
-
-classifiers = ['NaiveBayes', 'LinearRegression', 'DecisionTree', 'SVM', 'RandomForest']
+import global_variables as gl
 
 
 def main():
@@ -29,21 +28,8 @@ def main():
     # Tune parameters
     # 1. Find best z-score outlier filter value
     parameter_evaluation_result_path = os.path.join(result_path, "parameter_evaluation_results")
-    pe.find_best_z_score_filter(train_data_map, test_data_map, classifiers, parameter_evaluation_result_path)
-
-    # Preprocess data for exploration and classification
-    #   Standardization can be turned on and off
-    #   For imputation a method can be chosen
-    #   For outlier filtering a threshold can be chosen
-    #   For validation you can choose 'hold_out' for standard 80/20 distribution,
-    #       'k_fold' for k-set cross validation and 'leave_one_out' for n-point cross validation
-    standardize, impute, filter_outliers_z_score, validation_method = True, True, 0, 'hold_out'
-    pre.preprocess_data(train_data_map, standardize=standardize, impute=impute,
-                        z_score_threshold=filter_outliers_z_score)
-    pre.preprocess_data(test_data_map, standardize=standardize, impute=impute,
-                        z_score_threshold=0)
-    pre.preprocess_data(complete_data_map, standardize=standardize, impute=impute,
-                        z_score_threshold=filter_outliers_z_score)
+    # pe.find_best_z_score_filter(train_data_map, test_data_map, classifiers, parameter_evaluation_result_path)
+    # pre.find_best_imputation()
 
     # Explore data and save results
     # exp.check_data_sets(train_data_map, test_data_map)
@@ -57,23 +43,25 @@ def main():
     # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
 
-
-
     # Train classifier and predict
     classification_result_path = os.path.join(result_path, "classification_results")
-    parameter_descriptor = [standardize, impute, filter_outliers_z_score]
+    parameter_descriptor = [gl.standardize, gl.impute, gl.filter_outliers_z_score]
     # Turn this on to retrieve model configuration
     print_model_details = False
 
-    # if validation_method == 'hold_out':
-    #     for model in classifiers:
-    #         clf.classify(train_data_map, test_data_map, classification_result_path, parameter_descriptor,
-    #                      model, print_model_details, True)
+    # if gl.validation_method == 'hold_out':
+    #     for outcome in range(gl.number_outcomes):
+    #         for model in gl.classifiers:
+    #             print(gl.outcome_descriptors[outcome], model)
+    #             print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
+    #                                parameter_descriptor, model, print_model_details, True))
 
-    # if validation_method == 'k_fold':
-    #     for model in classifiers:
-    #         clf.classify_k_fold(complete_data_map, classification_result_path, parameter_descriptor,
-    #                             model, print_model_details, True)
+    if gl.validation_method == 'k_fold':
+        for outcome in range(gl.number_outcomes):
+            for model in gl.classifiers:
+                print(gl.outcome_descriptors[outcome], model)
+                print(clf.classify_k_fold(complete_data_map.copy(), outcome, classification_result_path,
+                                    parameter_descriptor, model, print_model_details, True))
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")

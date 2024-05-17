@@ -5,10 +5,7 @@ import re
 import seaborn as sns
 import pandas as pd
 from collections import Counter
-
-
-# Number of adverse outcomes in data set
-number_outcomes = 5
+import global_variables as gl
 
 
 def clean_feature_name(feature_name):
@@ -56,7 +53,7 @@ def explore_data(data_dictionary, output_directory):
                     plt.xlabel('Outcome')
                     plt.ylabel('Occurences')
 
-                    if feature_count < number_outcomes:
+                    if feature_count < gl.number_outcomes:
                         output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.png')
                     else:
                         output_file_path = os.path.join(clinical_data_directory, f'bar_{cleaned_feature_name}.png')       
