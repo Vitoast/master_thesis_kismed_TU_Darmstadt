@@ -91,7 +91,7 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
 # Classify for one outcome with a naive Bayesian classifier
 def classify(train_data_map, test_data_map, outcome_target_index, result_path, parameter_descriptor,
              classification_descriptor, print_model_details=False, save_model_details=True):
-    pre.preprocess_data(train_data_map, test_data_map, outcome_target_index, standardize=gl.standardize,
+    train_data_map, test_data_map = pre.preprocess_data(train_data_map, test_data_map, outcome_target_index, standardize=gl.standardize,
                         impute=gl.impute, z_score_threshold=gl.filter_outliers_z_score)
     x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map)
     y_train = np.array(y_train).flatten()

@@ -12,7 +12,8 @@ number_outcomes = 5
 #       Reasonable values range from 4 to 16 times the standard deviation
 #   For validation you can choose 'hold_out' for standard 80/20 distribution,
 #       'k_fold' for k-set cross validation (and 'leave_one_out' for n-point cross validation)
-standardize, impute, filter_outliers_z_score, validation_method = True, 'median_', 0, 'k_fold'
+standardize, impute, filter_outliers_z_score, validation_method = True, 'median_group', 0, 'k_fold'
+imputation_parameters = ['median_std', 'mean_std', 'median_group', 'mean_group']
 #   Maximum and minimum constants for z-score outlier filtering
 max_test_threshold = 16
 min_test_threshold = 4
