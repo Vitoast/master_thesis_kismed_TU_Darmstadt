@@ -28,7 +28,7 @@ def main():
     # Tune parameters
     # 1. Find best z-score outlier filter value
     parameter_evaluation_result_path = os.path.join(result_path, "parameter_evaluation_results")
-    # pe.find_best_z_score_filter(train_data_map, test_data_map, classifiers, parameter_evaluation_result_path)
+    # pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
     # pre.find_best_imputation()
 
     # Explore data and save results
@@ -56,16 +56,16 @@ def main():
     #             print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
     #                                parameter_descriptor, model, print_model_details, True))
 
-    if gl.validation_method == 'k_fold':
-        for outcome in range(gl.number_outcomes):
-            for model in gl.classifiers:
-                print(gl.outcome_descriptors[outcome], model)
-                print(clf.classify_k_fold(complete_data_map.copy(), outcome, classification_result_path,
-                                    parameter_descriptor, model, print_model_details, True))
+    # if gl.validation_method == 'k_fold':
+    #     for outcome in range(gl.number_outcomes):
+    #         for model in gl.classifiers:
+    #             print(gl.outcome_descriptors[outcome], model)
+    #             print(clf.classify_k_fold(complete_data_map.copy(), outcome, classification_result_path,
+    #                                 parameter_descriptor, model, print_model_details, True))
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
-    # fe.perform_ablation_study(train_data_map, test_data_map, feature_evaluation_result_path, classifiers)
+    fe.perform_ablation_study(complete_data_map, feature_evaluation_result_path)
 
     # accuracies_per_model = [[0.5, 0.3, 0.6], [0.8, 0.3, 0.6], [0.5, 0.3, 0.7], [0.8, 0.3, 0.7], [0.5, 0.3, 0.7]]
     # f1_scores_per_model = [[0.2, 0.2, 0.1], [0.1, 0.2, 0.1], [0.05, 0.2, 0.1], [0.2, 0.6, 0.1], [0.2, 0.8, 0.1]]

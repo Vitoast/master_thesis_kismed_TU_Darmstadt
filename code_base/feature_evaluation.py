@@ -7,11 +7,12 @@ import seaborn as sns
 import os
 import explorational_data_analysis as exp
 import global_variables as gl
+import preprocess_data as pre
 
 
 # Save results to Excel file
-def save_results_to_file(classifiers, accuracies, f1_scores, result_path, removed_feature_descriptor):
-    model_descriptors = [(desc + '_accuracy') for desc in classifiers] + [(desc + '_f1_score') for desc in classifiers]
+def save_results_to_file(accuracies, f1_scores, result_path, removed_feature_descriptor):
+    model_descriptors = [(desc + '_accuracy') for desc in gl.classifiers] + [(desc + '_f1_score') for desc in gl.classifiers]
     if not os.path.exists(result_path):
         df = pd.DataFrame({
             'Removed_Feature': model_descriptors,
@@ -24,7 +25,7 @@ def save_results_to_file(classifiers, accuracies, f1_scores, result_path, remove
 
 
 # Plot the scores of the different classifiers after eliminating features one by one
-def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, removed_features, result_path, classifiers,
+def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, removed_features, result_path,
                                   outcome_descriptor):
     plt.figure(figsize=(12, 6))
     ax = plt.subplot(111)
@@ -34,7 +35,7 @@ def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, rem
     for model in range(len(accuracies_per_model)):
         # ax.scatter(feature_counts, accuracies_per_model[model], label=classifiers[model]+'_accuracy')
         sns.regplot(x=feature_counts, y=f1_scores_per_model[model], scatter_kws={"color": colors[model]},
-                    line_kws={"color": colors[model]}, order=6, label=classifiers[model])
+                    line_kws={"color": colors[model]}, order=6, label=gl.classifiers[model])
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 1, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -71,7 +72,7 @@ def check_feature_variance_inflation(train_data_map, result_path):
 
 # Check the features of a data set by their vif and eliminate the highest in each iteration
 # Then train classifiers and evaluate their performance without the feature
-def perform_ablation_study(train_data_map, test_data_map, result_directory, classifiers):
+def perform_ablation_study(complete_data_map, result_directory):
     removed_features = []
     accuracies_per_outcome, f1_scores_per_outcome = [], []
     os.makedirs(result_directory, exist_ok=True)
@@ -83,29 +84,33 @@ def perform_ablation_study(train_data_map, test_data_map, result_directory, clas
     for i in range(gl.number_outcomes):
         accuracies_per_outcome.append([])
         f1_scores_per_outcome.append([])
-        for j in range(len(classifiers)):
+        for j in range(len(gl.classifiers)):
             accuracies_per_outcome[i].append([])
             f1_scores_per_outcome[i].append([])
+    # Reference map for computing vifs
+    reference_map = complete_data_map.copy()
+    pre.preprocess_data(reference_map, reference_map.copy(), 0, gl.standardize, gl.impute, gl.max_test_threshold)
+    reference_map.pop(list(reference_map.keys())[0])
     # Open file to save results
     with open(stats_file_path, 'w') as stats_file:
         # Perform feature elimination and classification until only a few features are left
-        for feature_count in range(0, len(train_data_map.keys()) - 10):
+        for feature_count in range(0, len(complete_data_map.keys()) - 10):
             # Compute Variance Inflation Factors for each feature and get highest
-            worst_feature, vifs = check_feature_variance_inflation(train_data_map, result_path)
-            print(f'Remove from training data:', worst_feature['feature'], "with vif:", worst_feature['VIF'], ", features left:", len(train_data_map) -1)
+            worst_feature, vifs = check_feature_variance_inflation(reference_map, result_path)
+            print(f'Remove from training data:', worst_feature['feature'], "with vif:", worst_feature['VIF'],
+                  ", features left:", len(complete_data_map) - 1)
             # Eliminate feature
-            train_data_map.pop(worst_feature['feature'])
-            test_data_map.pop(worst_feature['feature'])
+            complete_data_map.pop(worst_feature['feature'])
+            reference_map.pop(worst_feature['feature'])
             removed_features.append(worst_feature['feature'])
-            accuracy_results = []
-            f1_scores = []
             # Then perform classification with all given models and evaluate the performance with f1 score
-            for model in classifiers:
-                accuracy_results, f1_scores = clf.classify(train_data_map, test_data_map, result_path, [],
-                                                           model, False, False)
+            for model in gl.classifiers:
                 for outcome_value in range(gl.number_outcomes):
-                    accuracies_per_outcome[outcome_value][classifiers.index(model)].append(accuracy_results[outcome_value])
-                    f1_scores_per_outcome[outcome_value][classifiers.index(model)].append(f1_scores[outcome_value])
+                    accuracy_results, f1_scores = clf.classify_k_fold(complete_data_map, outcome_value,
+                                                                      result_path, [],
+                                                                      model, False, False)
+                    accuracies_per_outcome[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
+                    f1_scores_per_outcome[outcome_value][gl.classifiers.index(model)].append(f1_scores)
             # Save results
             for outcome in range(gl.number_outcomes):
                 # Extract current values of iteration from overall scores
@@ -113,7 +118,7 @@ def perform_ablation_study(train_data_map, test_data_map, result_directory, clas
                 for val in accuracies_per_outcome[outcome]: temp_accuracies.append(val[feature_count])
                 temp_f1_scores = []
                 for val in f1_scores_per_outcome[outcome]: temp_f1_scores.append(val[feature_count])
-                save_results_to_file(classifiers, temp_accuracies, temp_f1_scores,
+                save_results_to_file(temp_accuracies, temp_f1_scores,
                                      outcome_result_paths[outcome] + '.xlsx', exp.clean_feature_name(worst_feature['feature']))
             stats_file.write(f"{worst_feature['feature']},{worst_feature['VIF']},")
     # Plot resulting f1 score curve for each outcome and model
@@ -121,5 +126,5 @@ def perform_ablation_study(train_data_map, test_data_map, result_directory, clas
         temp_accuracies = accuracies_per_outcome[outcome]
         temp_f1_scores = f1_scores_per_outcome[outcome]
         plot_feature_ablation_results(temp_accuracies, temp_f1_scores, removed_features,
-                                      outcome_result_paths[outcome] + '_plot', classifiers,
+                                      outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome])
