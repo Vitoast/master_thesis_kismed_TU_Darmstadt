@@ -12,9 +12,9 @@ def filter_by_z_score(data, center, threshold):
 
 
 # Preprocess data to make it usable in classification
-# Involves: Imputation of missing values, standardization and outlier filtering
+# Involves: Imputation of missing values, standardization, outlier filtering and oversampling
 def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_index, standardize, impute,
-                    z_score_threshold):
+                    z_score_threshold, oversample_rate):
     # Create imputation instance to replace nan values in data
     if 'mean' in impute:
         imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
@@ -28,25 +28,37 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     feature_to_remove = []
     # Count features but leave out ID in first column
     feature_count = 0
-    remove_points_mask = np.ones(len(train_data_dictionary['ID']), dtype=bool)
     outcome_descriptor = list(train_data_dictionary.keys())[outcome_target_index + 1]
     train_outcome_values = train_data_dictionary[outcome_descriptor]
     # If requested impute missing values in set by treating each outcome class separately
-    if 'group' in impute:
+    if 'group' in impute or oversample_rate != 0:
         imputed_train_data = []
+        # Separate classes by outcome
         for class_value in np.unique(train_outcome_values):
             subset_train = train_outcome_values == class_value
             class_subset = pd.DataFrame(train_data_dictionary)[subset_train]
-            # imputer.fit_transform(np.reshape(class_subset, (-1, 1)))
-            t = class_subset.median()
-            idf = pd.DataFrame(class_subset.fillna(class_subset.median()))
-            imputed_train_data.append(idf)
+            # If requested impute each class
+            if 'group' in impute:
+                idf = pd.DataFrame(class_subset.fillna(class_subset.median()))
+                imputed_train_data.append(idf)
+            else:
+                imputed_train_data.append(class_subset)
+        # If requested add smaller class subset multiple times to training data for oversampling and balancing
+        if oversample_rate != 0:
+            current_class_rate = len(imputed_train_data[1]) / (len(imputed_train_data[0]) + len(imputed_train_data[1]))
+            if current_class_rate < oversample_rate:
+                multiplier = int(np.floor(oversample_rate / current_class_rate))
+                for i in range(multiplier):
+                    imputed_train_data.append(imputed_train_data[1])
+                current_class_rate = len(imputed_train_data[1]) * (1+multiplier) / (len(imputed_train_data[0]) + len(imputed_train_data[1]))
         train_data_dictionary = pd.concat(imputed_train_data)
         new_data_dictionary = {}
         for feature_name, feature_data in train_data_dictionary.items():
             tmp = feature_data.tolist()
             new_data_dictionary[feature_name] = tmp
         train_data_dictionary = new_data_dictionary
+    # Create boolean mask to filter points
+    remove_points_mask = np.ones(len(train_data_dictionary['ID']), dtype=bool)
     # For Test set do imputation and standardization with parameter from training set if requested
     for (train_feature_name, train_feature_data), (test_feature_name, test_feature_data) in zip(
             train_data_dictionary.items(), test_data_dictionary.items()):
@@ -91,6 +103,7 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     # Remove patients with invalid outlying points from the training feature set
     if z_score_threshold > 0:
         for feature_name, feature_data in train_data_dictionary.items():
-            train_data_dictionary[feature_name] = feature_data[remove_points_mask]
-        # print('number of points removed', np.count_nonzero(np.invert(remove_points_mask)), 'with threshold', z_score_threshold)
+            train_data_dictionary[feature_name] = np.array(feature_data)[remove_points_mask]
+    # print('number of points removed', np.count_nonzero(np.invert(remove_points_mask)), 'with threshold', z_score_threshold)
+    # print('Oversampled', multiplier, 'times, achieved class rate: ', current_class_rate)
     return train_data_dictionary, test_data_dictionary

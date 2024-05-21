@@ -25,11 +25,21 @@ def main():
     test_data_map = read_excel.read_excel_data(test_source_path)
     complete_data_map = read_excel.read_excel_data(complete_source_path)
 
+    count = 0
+    for feature_name, feature_data in complete_data_map.items():
+        if count < 1:
+            count += 1
+            continue
+        if count > 5: break
+        gl.original_outcome_strings.append(feature_name)
+        count += 1
+
     # Tune parameters
     # 1. Find best z-score outlier filter value
     parameter_evaluation_result_path = os.path.join(result_path, "parameter_evaluation_results")
     # pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
-    pe.find_best_imputation(complete_data_map, result_path)
+    # pe.find_best_imputation(complete_data_map, result_path)
+    pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
     # exp.check_data_sets(train_data_map, test_data_map)
@@ -45,7 +55,7 @@ def main():
 
     # Train classifier and predict
     classification_result_path = os.path.join(result_path, "classification_results")
-    parameter_descriptor = [gl.standardize, gl.impute, gl.filter_outliers_z_score]
+    parameter_descriptor = [gl.standardize, gl.impute, gl.filter_outliers_z_score, gl.oversample]
     # Turn this on to retrieve model configuration
     print_model_details = False
 

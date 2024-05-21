@@ -72,8 +72,8 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
         # accuracy_descriptors = [s + '_accuracy'for s in gl.outcome_descriptors]
         # f1_descriptors = [s + '_f1_score' for s in gl.outcome_descriptors]
         df = pd.DataFrame({
-            'Configuration': (['Outcome', 'Classifier', 'Standardized', 'Imputer', 'Z-Score Threshold', 'K-folds',
-                               'Accuracy', 'F1-Score']),
+            'Configuration': (['Outcome', 'Classifier', 'Standardized', 'Imputer', 'Z-Score Threshold', 'Oversampling',
+                               'K-folds', 'Accuracy', 'F1-Score']),
             classification_descriptor: (str_parameters + str_accuracies + str_f1_scores),
         })
     # Otherwise read file only add new column
@@ -91,14 +91,17 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
 # Classify for one outcome with a naive Bayesian classifier
 def classify(train_data_map, test_data_map, outcome_target_index, result_path, parameter_descriptor,
              classification_descriptor, print_model_details=False, save_model_details=True):
-    train_data_map, test_data_map = pre.preprocess_data(train_data_map, test_data_map, outcome_target_index, standardize=gl.standardize,
-                        impute=gl.impute, z_score_threshold=gl.filter_outliers_z_score)
+    train_data_map, test_data_map = pre.preprocess_data(train_data_map, test_data_map, outcome_target_index,
+                                                        standardize=gl.standardize,
+                                                        impute=gl.impute, z_score_threshold=gl.filter_outliers_z_score,
+                                                        oversample_rate=gl.oversample)
     x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map)
     y_train = np.array(y_train).flatten()
     y_test = np.array(y_test).flatten()
     # Create unique identifier for current model
     model_descriptor = ''
-    parameter_descriptor = [classification_descriptor] + [gl.outcome_descriptors[outcome_target_index]] + parameter_descriptor + [0]
+    parameter_descriptor = [classification_descriptor] + [
+        gl.outcome_descriptors[outcome_target_index]] + parameter_descriptor + [0]
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
     # Train model and predict
     accuracy_results, f1_scores = classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_data_map,
@@ -139,7 +142,8 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
     # Print out information about the classification model
     if print_model_details:
         if classification_descriptor == 'NaiveBayes':
-            print(gl.outcome_descriptors[outcome_target_index], " prediction accuracy of naive Bayes: ", accuracy_results[outcome_target_index])
+            print(gl.outcome_descriptors[outcome_target_index], " prediction accuracy of naive Bayes: ",
+                  accuracy_results[outcome_target_index])
             print("    Class prior probabilities:", classifier.class_prior_)
         elif classification_descriptor == 'LinearRegression':
             print(gl.outcome_descriptors[outcome_target_index], " Linear Regression: MSE ", mse, "R^2 ", r2,
@@ -153,7 +157,8 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
             print_feature_importances_of_forests(train_data_map, feature_importances)
             print("")
         elif classification_descriptor == 'SVM':
-            print(gl.outcome_descriptors[outcome_target_index], " prediction accuracy of SVM: ", accuracy_results[outcome_target_index])
+            print(gl.outcome_descriptors[outcome_target_index], " prediction accuracy of SVM: ",
+                  accuracy_results[outcome_target_index])
         elif classification_descriptor == 'RandomForest':
             print(gl.outcome_descriptors[outcome_target_index], " prediction accuracy of Random Forest: ",
                   accuracy_results[outcome_target_index])
@@ -164,13 +169,15 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
 
 
 # Classify with using k-fold cross validation
-def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classification_descriptor, print_model_details=False, save_model_details=True):
+def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classification_descriptor,
+                    print_model_details=False, save_model_details=True):
     # Prepare k split
     k_fold_split = 5
     kf = KFold(n_splits=k_fold_split, shuffle=True)
     # Create unique identifier for current model
     model_descriptor = ''
-    parameter_descriptor = [gl.outcome_descriptors[outcome]] + [classification_descriptor] + parameter_descriptor + [k_fold_split]
+    parameter_descriptor = [gl.outcome_descriptors[outcome]] + [classification_descriptor] + parameter_descriptor + [
+        k_fold_split]
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
     # Store accuracy results here
     accuracy_results, f1_score_results = [], []

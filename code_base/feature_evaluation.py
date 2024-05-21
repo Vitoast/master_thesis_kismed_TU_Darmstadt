@@ -89,7 +89,8 @@ def perform_ablation_study(complete_data_map, result_directory):
             f1_scores_per_outcome[i].append([])
     # Reference map for computing vifs
     reference_map = complete_data_map.copy()
-    pre.preprocess_data(reference_map, reference_map.copy(), 0, gl.standardize, gl.impute, gl.max_test_threshold)
+    pre.preprocess_data(reference_map, reference_map.copy(), 0,
+                        gl.standardize, gl.impute, gl.max_test_threshold, gl.oversample)
     reference_map.pop(list(reference_map.keys())[0])
     # Open file to save results
     with open(stats_file_path, 'w') as stats_file:
