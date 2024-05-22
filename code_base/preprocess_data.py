@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
 import global_variables as gl
 
 
@@ -28,10 +29,10 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     feature_to_remove = []
     # Count features but leave out ID in first column
     feature_count = 0
-    outcome_descriptor = list(train_data_dictionary.keys())[outcome_target_index + 1]
+    outcome_descriptor = gl.original_outcome_strings[outcome_target_index]
     train_outcome_values = train_data_dictionary[outcome_descriptor]
     # If requested impute missing values in set by treating each outcome class separately
-    if 'group' in impute or oversample_rate != 0:
+    if 'group' in impute:
         imputed_train_data = []
         # Separate classes by outcome
         for class_value in np.unique(train_outcome_values):
@@ -43,23 +44,17 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
                 imputed_train_data.append(idf)
             else:
                 imputed_train_data.append(class_subset)
-        # If requested add smaller class subset multiple times to training data for oversampling and balancing
-        if oversample_rate != 0:
-            current_class_rate = len(imputed_train_data[1]) / (len(imputed_train_data[0]) + len(imputed_train_data[1]))
-            if current_class_rate < oversample_rate:
-                multiplier = int(np.floor(oversample_rate / current_class_rate))
-                for i in range(multiplier):
-                    imputed_train_data.append(imputed_train_data[1])
-                current_class_rate = len(imputed_train_data[1]) * (1+multiplier) / (len(imputed_train_data[0]) + len(imputed_train_data[1]))
         train_data_dictionary = pd.concat(imputed_train_data)
         new_data_dictionary = {}
         for feature_name, feature_data in train_data_dictionary.items():
             tmp = feature_data.tolist()
             new_data_dictionary[feature_name] = tmp
         train_data_dictionary = new_data_dictionary
+
     # Create boolean mask to filter points
     remove_points_mask = np.ones(len(train_data_dictionary['ID']), dtype=bool)
-    # For Test set do imputation and standardization with parameter from training set if requested
+
+    # Do standardization, imputation and outlier filtering if requested
     for (train_feature_name, train_feature_data), (test_feature_name, test_feature_data) in zip(
             train_data_dictionary.items(), test_data_dictionary.items()):
         # Preprocess only numerical data, remove all features that are strings
@@ -100,6 +95,16 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     for name in feature_to_remove:
         train_data_dictionary.pop(name)
         test_data_dictionary.pop(name)
+    # Do SMOTE oversampling
+    if oversample_rate > 0:
+        smote = SMOTE(random_state=42)
+        train_set = pd.DataFrame(train_data_dictionary)
+        train_set.drop(columns=outcome_descriptor)
+        train_set, train_outcome_values = smote.fit_resample(train_set, train_outcome_values)
+        # Convert the resampled data back to a dictionary
+        for feature_name in train_data_dictionary.keys():
+            train_data_dictionary[feature_name] = train_set[feature_name]
+        train_data_dictionary[outcome_descriptor] = train_outcome_values
     # Remove patients with invalid outlying points from the training feature set
     if z_score_threshold > 0:
         for feature_name, feature_data in train_data_dictionary.items():

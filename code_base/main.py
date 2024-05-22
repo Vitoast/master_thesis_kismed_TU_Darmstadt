@@ -25,14 +25,9 @@ def main():
     test_data_map = read_excel.read_excel_data(test_source_path)
     complete_data_map = read_excel.read_excel_data(complete_source_path)
 
-    count = 0
-    for feature_name, feature_data in complete_data_map.items():
-        if count < 1:
-            count += 1
-            continue
-        if count > 5: break
+    # Initialize the descriptors of the adverse outcomes
+    for feature_name, feature_data in list(complete_data_map.items())[1:6]:
         gl.original_outcome_strings.append(feature_name)
-        count += 1
 
     # Tune parameters
     # 1. Find best z-score outlier filter value

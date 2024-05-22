@@ -1,6 +1,6 @@
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import f1_score, roc_curve, auc
@@ -119,8 +119,8 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
     # Fit model, predict and evaluate accuracy for the desired outcome
     # Choose desired classifier
     classifier = GaussianNB()
-    if classification_descriptor == 'LinearRegression':
-        classifier = LinearRegression()
+    if classification_descriptor == 'LogisticRegression':
+        classifier = LogisticRegression()
     elif classification_descriptor == 'DecisionTree':
         classifier = DecisionTreeClassifier()
     elif classification_descriptor == 'SVM':
@@ -131,9 +131,6 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
     classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
     y_pred = classifier.predict(np.reshape(x_test, (len(x_test[0]), len(x_test))))
     # Compute prediction accuracy
-    # In case of regression extract classes from prediction
-    if classification_descriptor == 'LinearRegression':
-        y_pred = [1 if pred >= 0.5 else 0 for pred in y_pred]
     accuracy_results.append(accuracy_score(y_test, y_pred))
     # Compute error measures
     f1_scores.append(f1_score(y_test, y_pred))
@@ -145,7 +142,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
             print(gl.outcome_descriptors[outcome_target_index], " prediction accuracy of naive Bayes: ",
                   accuracy_results[outcome_target_index])
             print("    Class prior probabilities:", classifier.class_prior_)
-        elif classification_descriptor == 'LinearRegression':
+        elif classification_descriptor == 'LogisticRegression':
             print(gl.outcome_descriptors[outcome_target_index], " Linear Regression: MSE ", mse, "R^2 ", r2,
                   " prediction accuracy: ",
                   accuracy_results[outcome_target_index])

@@ -1,5 +1,5 @@
 # String descriptors of the used classifiers
-classifiers = ['NaiveBayes', 'LinearRegression', 'DecisionTree', 'SVM', 'RandomForest']
+classifiers = ['NaiveBayes', 'LogisticRegression', 'DecisionTree', 'SVM', 'RandomForest']
 # String descriptors and count of adverse outcomes
 outcome_descriptors = ["AKI3", "AKD1", "LCOS", "AF", "Any"]
 number_outcomes = 5
@@ -14,7 +14,7 @@ number_outcomes = 5
 #       'k_fold' for k-set cross validation (and 'leave_one_out' for n-point cross validation)
 #   For oversampling of imbalanced classes set a value.
 #       Choose 0 to not oversample or the desired class distribution
-standardize, impute, filter_outliers_z_score, validation_method, oversample = True, 'median_group', 0, 'k_fold', 0
+standardize, impute, filter_outliers_z_score, validation_method, oversample = True, 'median_std', 0, 'k_fold', 0
 imputation_parameters = ['median_std', 'mean_std', 'median_group', 'mean_group']
 #   Maximum and minimum constants for z-score outlier filtering
 max_test_threshold = 16
