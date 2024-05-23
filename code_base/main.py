@@ -34,7 +34,7 @@ def main():
     parameter_evaluation_result_path = os.path.join(result_path, "parameter_evaluation_results")
     # pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
     # pe.find_best_imputation(complete_data_map, result_path)
-    pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
+    # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
     # exp.check_data_sets(train_data_map, test_data_map)
@@ -70,7 +70,7 @@ def main():
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
-    # fe.perform_ablation_study(complete_data_map, feature_evaluation_result_path)
+    fe.perform_ablation_study(complete_data_map, feature_evaluation_result_path)
 
     # accuracies_per_model = [[0.5, 0.3, 0.6], [0.8, 0.3, 0.6], [0.5, 0.3, 0.7], [0.8, 0.3, 0.7], [0.5, 0.3, 0.7]]
     # f1_scores_per_model = [[0.2, 0.2, 0.1], [0.1, 0.2, 0.1], [0.05, 0.2, 0.1], [0.2, 0.6, 0.1], [0.2, 0.8, 0.1]]

@@ -54,9 +54,9 @@ def check_feature_variance_inflation(train_data_map, result_path):
     feature_count = 0
     # Exclude outcomes from features
     for feature_name, feature_data in train_data_map.items():
-        if feature_count >= gl.number_outcomes:
-            marker_names.append(feature_name)
-            marker_data.append(feature_data)
+        # if feature_count >= gl.number_outcomes:
+        marker_names.append(feature_name)
+        marker_data.append(feature_data)
         feature_count += 1
     # Create a pandas DataFrame
     df = pd.DataFrame(np.transpose(marker_data), columns=marker_names)
@@ -92,14 +92,19 @@ def perform_ablation_study(complete_data_map, result_directory):
     pre.preprocess_data(reference_map, reference_map.copy(), 0,
                         gl.standardize, gl.impute, gl.max_test_threshold, gl.oversample)
     reference_map.pop(list(reference_map.keys())[0])
+    tmp = list(reference_map.keys())
+    for key in list(complete_data_map.keys())[6:len(complete_data_map.keys())-50]:
+        complete_data_map.pop(key)
+        if key in tmp:
+            reference_map.pop(key)
     # Open file to save results
     with open(stats_file_path, 'w') as stats_file:
         # Perform feature elimination and classification until only a few features are left
-        for feature_count in range(0, len(complete_data_map.keys()) - 10):
+        for feature_count in range(0, len(complete_data_map.keys()) - gl.number_outcomes - 2):
             # Compute Variance Inflation Factors for each feature and get highest
             worst_feature, vifs = check_feature_variance_inflation(reference_map, result_path)
             print(f'Remove from training data:', worst_feature['feature'], "with vif:", worst_feature['VIF'],
-                  ", features left:", len(complete_data_map) - 1)
+                  ", features left:", len(complete_data_map) - 6)
             # Eliminate feature
             complete_data_map.pop(worst_feature['feature'])
             reference_map.pop(worst_feature['feature'])
@@ -119,7 +124,7 @@ def perform_ablation_study(complete_data_map, result_directory):
                 for val in accuracies_per_outcome[outcome]: temp_accuracies.append(val[feature_count])
                 temp_f1_scores = []
                 for val in f1_scores_per_outcome[outcome]: temp_f1_scores.append(val[feature_count])
-                save_results_to_file(temp_accuracies, temp_f1_scores,
+                save_results_to_file(np.array(temp_accuracies).flatten(), np.array(temp_f1_scores).flatten(),
                                      outcome_result_paths[outcome] + '.xlsx', exp.clean_feature_name(worst_feature['feature']))
             stats_file.write(f"{worst_feature['feature']},{worst_feature['VIF']},")
     # Plot resulting f1 score curve for each outcome and model
