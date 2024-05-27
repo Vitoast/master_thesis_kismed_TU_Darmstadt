@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
+import xgboost as xgb
 import pandas as pd
 import os
 import numpy as np
@@ -127,6 +128,8 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
         classifier = SVC()
     elif classification_descriptor == 'RandomForest':
         classifier = RandomForestClassifier()
+    elif classification_descriptor == 'XGBoost':
+        classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
     # Fit model and predict on test set
     classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
     y_pred = classifier.predict(np.reshape(x_test, (len(x_test[0]), len(x_test))))

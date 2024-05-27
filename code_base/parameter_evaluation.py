@@ -23,12 +23,11 @@ def create_result_structure():
 def plot_parameter_evaluation(accuracy_results, f1_score_results, x_axis, result_path, title, xlabel, ylabel, plot_name):
     for outcome in range(len(gl.outcome_descriptors)):
         ax = plt.subplot(111)
-        colors = ['red', 'orange', 'green', 'purple', 'black']
         # Plot a scatter plot of the data including a regression line
         for model in range(len(gl.classifiers)):
             plt.scatter(x=x_axis[outcome], # fix this for imp and z !!!
                         y=f1_score_results[outcome][model],
-                        color=colors[model], label=gl.classifiers[model])
+                        color=gl.classifier_colors[model], label=gl.classifiers[model])
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 1, box.height])
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
