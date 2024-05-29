@@ -18,6 +18,8 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
     marker_names, marker_data = [], []
     all_feature_names, all_feature_data = [], []
     correlation_coefficients, p_values = [], []
+
+    # Filter markers based on their belonging to POST or PRE
     feature_count = 0
     for feature_name, feature_data in data_dictionary.items():
         cleaned_feature_name = exp.clean_feature_name(feature_name)
@@ -68,7 +70,6 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
             # Plot horizontal lines for markers on the x-axis
             axs[0].hlines(0, x[0], x[-1], colors='black', linestyles='dashed', alpha=0.5)
             axs[1].hlines(0, x[0], x[-1], colors='black', linestyles='dashed', alpha=0.5)
-
             axs[0].set_title(f'Correlation of PRE-markers with {outcome_names[outcome]}')
             axs[0].set_xlabel('Marker')
             axs[0].set_ylabel('Correlation Coefficient (color) and P-Value (grey)')
@@ -82,6 +83,7 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
             output_file_path = os.path.join(output_directory, f'Correlation of markers with {cleaned_feature_name}.jpg')
             plt.savefig(output_file_path)
             plt.close()
+
     # Save correlation coefficients for all features
     save_feature_importance(outcome_names, outcome_data, all_feature_names, all_feature_data, output_directory)
 
@@ -112,6 +114,7 @@ def compute_marker_correlation_matrix(data_dictionary, output_directory):
 
 
 def show_pairwise_marker_correlation(data_dictionary, output_directory):
+    # Do pairwise correlation only for members of PRE and POST
     for category in ['PRE', 'POST']:
         for outcome in range(1, number_outcomes):
             marker_names, marker_data = [], []
@@ -142,10 +145,15 @@ def save_feature_importance(outcome_names, outcome_data, all_feature_names, all_
     stats_file_path = os.path.join(output_directory, 'correlation_coefficients.txt')
     correlation_coefficients, p_values = [], []
     sorted_features_result = []
+
+    # Open file to save results
     with open(stats_file_path, 'w') as stats_file:
+
+        #  Do correlation analysis for each outcome
         for outcome in range(len(outcome_names)):
             correlation_coefficients.append([])
             p_values.append([])
+            # Compute correlation between outcome and feature
             for feature in range(len(all_feature_names)):
                 # Check if the feature data contains only numeric values
                 if all(isinstance(x, (int, float)) for x in all_feature_data[outcome]):
@@ -154,6 +162,7 @@ def save_feature_importance(outcome_names, outcome_data, all_feature_names, all_
                     p_values[outcome].append(p_value)
                 else:
                     all_feature_names.pop(all_feature_names[feature])
+
             # Tie features together with their importance and print the sorted list, leaving out neglected features
             features_with_correlation = list(zip(all_feature_names, correlation_coefficients[outcome], p_values[outcome]))
             features_with_correlation_sorted = sorted(features_with_correlation, key=lambda x: x[1], reverse=True)
@@ -162,4 +171,6 @@ def save_feature_importance(outcome_names, outcome_data, all_feature_names, all_
             for feature_name, correlation, p_value in features_with_correlation_sorted:
                 stats_file.write(f'{feature_name}: Correlation: {correlation}, P-Value: {p_value}\n')
             stats_file.write('\n')
+
+    # return computed results
     return sorted_features_result

@@ -14,7 +14,7 @@ number_outcomes = 5
 #       'k_fold' for k-set cross validation (and 'leave_one_out' for n-point cross validation)
 #   For oversampling of imbalanced classes set a value.
 #       Choose 0 to not oversample or the desired class distribution
-standardize, impute, filter_outliers_z_score, validation_method, oversample = True, 'median_group', 7, 'k_fold', 1
+standardize, impute, filter_outliers_z_score, validation_method, oversample = True, 'median_group', 0, 'k_fold', 1
 feature_ablation_strategy = 'performance' # 'vif'
 imputation_parameters = ['median_std', 'mean_std', 'median_group', 'mean_group']
 #   Maximum and minimum constants for z-score outlier filtering

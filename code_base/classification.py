@@ -21,26 +21,13 @@ result_file_name = "classification_results.xlsx"
 
 # Provides functionality to extract x and y train and test series from dictionaries
 def split_maps(train_map, test_map):
-    feature_count = 0
-    x_train, y_train = [], []
-    for feature_name, feature_data in train_map.items():
-        # Outcome is in first column, use them as y
-        if feature_count == 0:
-            y_train.append(feature_data)
-        # Rest is X
-        else:
-            x_train.append(feature_data)
-        feature_count += 1
-    feature_count = 0
-    x_test, y_test = [], []
-    for feature_name, feature_data in test_map.items():
-        # Outcome is in first column, use them as y
-        if feature_count == 0:
-            y_test.append(feature_data)
-        # Rest is X
-        else:
-            x_test.append(feature_data)
-        feature_count += 1
+    # Split train data
+    y_train = [np.array(next(iter(train_map.values()))).flatten()]
+    x_train = [np.array(feature_data).flatten() for feature_name, feature_data in list(train_map.items())[1:]]
+
+    # Split test data
+    y_test = [np.array(next(iter(test_map.values()))).flatten()]
+    x_test = [np.array(feature_data).flatten() for feature_name, feature_data in list(test_map.items())[1:]]
 
     return x_train, x_test, y_train, y_test
 
@@ -68,6 +55,7 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
     str_parameters = [str(num) for num in parameter_descriptor]
     str_accuracies = [str(num) for num in accuracy]
     str_f1_scores = [str(num) for num in f1_scores]
+
     # If the file does not exist, create it and add a first column with descriptors of the rows plus data column
     if not os.path.exists(result_file):
         # accuracy_descriptors = [s + '_accuracy'for s in gl.outcome_descriptors]
@@ -77,6 +65,7 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
                                'K-folds', 'Accuracy', 'F1-Score']),
             classification_descriptor: (str_parameters + str_accuracies + str_f1_scores),
         })
+
     # Otherwise read file only add new column
     else:
         df = pd.read_excel(result_file)
@@ -86,6 +75,8 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
         # Overwrite data in column
         new_column_content = str_parameters + str_accuracies + str_f1_scores
         df[classification_descriptor][:len(new_column_content)] = new_column_content
+
+    # Write to file
     df.to_excel(result_file, index=False)
 
 
@@ -99,26 +90,29 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
     x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map)
     y_train = np.array(y_train).flatten()
     y_test = np.array(y_test).flatten()
+
     # Create unique identifier for current model
     model_descriptor = ''
     parameter_descriptor = [classification_descriptor] + [
         gl.outcome_descriptors[outcome_target_index]] + parameter_descriptor + [0]
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
+
     # Train model and predict
-    accuracy_results, f1_scores = classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_data_map,
+    accuracy_results, f1_scores = classify_internal(x_train, x_test, y_train, y_test, train_data_map,
                                                     outcome_target_index, result_path, parameter_descriptor,
                                                     classification_descriptor, print_model_details)
+
     # Save results and return accuracy
     if save_model_details:
         save_results_to_file(accuracy_results, f1_scores, result_path, model_descriptor, parameter_descriptor)
     return accuracy_results, f1_scores
 
 
-def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_data_map, outcome_target_index,
+def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_target_index,
                       result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
     accuracy_results, f1_scores = [], []
     # Fit model, predict and evaluate accuracy for the desired outcome
-    # Choose desired classifier
+    # Choose desired classifier based on configuration
     classifier = GaussianNB()
     if classification_descriptor == 'LogisticRegression':
         classifier = LogisticRegression()
@@ -130,6 +124,12 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
         classifier = RandomForestClassifier()
     elif classification_descriptor == 'XGBoost':
         classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+
+    # In case of erroneous empy data stop
+    if len(x_train) == 0:
+        print('No training data available with', outcome_target_index, classification_descriptor)
+        return np.nan, np.nan
+
     # Fit model and predict on test set
     classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
     y_pred = classifier.predict(np.reshape(x_test, (len(x_test[0]), len(x_test))))
@@ -139,6 +139,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
     f1_scores.append(f1_score(y_test, y_pred))
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
+
     # Print out information about the classification model
     if print_model_details:
         if classification_descriptor == 'NaiveBayes':
@@ -165,6 +166,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, test_dat
             print("    Max Depth of Trees:", classifier.max_depth, "Number of Trees:", len(classifier.estimators_))
             feature_importances = classifier.feature_importances_
             print_feature_importances_of_forests(train_data_map, feature_importances)
+
     return accuracy_results, f1_scores
 
 
@@ -174,11 +176,13 @@ def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classi
     # Prepare k split
     k_fold_split = 5
     kf = KFold(n_splits=k_fold_split, shuffle=True)
+
     # Create unique identifier for current model
     model_descriptor = ''
     parameter_descriptor = [gl.outcome_descriptors[outcome]] + [classification_descriptor] + parameter_descriptor + [
         k_fold_split]
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
+
     # Store accuracy results here
     accuracy_results, f1_score_results = [], []
     # Perform classification for each split
@@ -195,8 +199,11 @@ def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classi
                                                   print_model_details, False)
         accuracy_results.append(accuracy_value)
         f1_score_results.append(f1_score_value)
+
     # Save average accuracy to file
     if save_model_details:
         save_results_to_file(np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0), result_path,
                              model_descriptor, parameter_descriptor)
+
+    # Return mean of accuracy and f1 score of all predictions
     return np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0)
