@@ -37,11 +37,14 @@ def main():
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
+    exploration_result_path = os.path.join(result_path, 'exploration_results')
     # exp.check_data_sets(train_data_map, test_data_map)
     # if standardize or impute:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
     # else:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
+    umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
+    exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
     # Compute correlation metrics
     # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
@@ -71,7 +74,7 @@ def main():
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
     # fe.perform_feature_ablation_study_vif(complete_data_map, feature_evaluation_result_path)
-    fe.perform_feature_ablation_study_performance(complete_data_map, feature_evaluation_result_path)
+    # fe.perform_feature_ablation_study_performance(complete_data_map, feature_evaluation_result_path)
 
     # accuracies_per_model = [[0.5, 0.3, 0.6], [0.8, 0.3, 0.6], [0.5, 0.3, 0.7], [0.8, 0.3, 0.7], [0.5, 0.3, 0.7]]
     # f1_scores_per_model = [[0.2, 0.2, 0.1], [0.1, 0.2, 0.1], [0.05, 0.2, 0.1], [0.2, 0.6, 0.1], [0.2, 0.8, 0.1]]

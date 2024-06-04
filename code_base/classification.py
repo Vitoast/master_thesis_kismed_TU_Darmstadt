@@ -9,6 +9,9 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 import xgboost as xgb
+from skopt.utils import use_named_args
+from skopt import gp_minimize
+from skopt.space import Real, Integer, Categorical
 import pandas as pd
 import os
 import numpy as np
@@ -26,8 +29,11 @@ def split_maps(train_map, test_map):
     x_train = [np.array(feature_data).flatten() for feature_name, feature_data in list(train_map.items())[1:]]
 
     # Split test data
-    y_test = [np.array(next(iter(test_map.values()))).flatten()]
-    x_test = [np.array(feature_data).flatten() for feature_name, feature_data in list(test_map.items())[1:]]
+    x_test = []
+    y_test = []
+    if not len(test_map) == 0:
+        y_test = [np.array(next(iter(test_map.values()))).flatten()]
+        x_test = [np.array(feature_data).flatten() for feature_name, feature_data in list(test_map.items())[1:]]
 
     return x_train, x_test, y_train, y_test
 
@@ -207,3 +213,21 @@ def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classi
 
     # Return mean of accuracy and f1 score of all predictions
     return np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0)
+
+
+# Define the hyperparameter space
+param_space = [
+    Categorical(['mean', 'median', 'most_frequent'], name='imputer_strategy'),
+    Categorical(['standard', 'minmax'], name='scaler_type'),
+    Integer(10, 200, name='n_estimators'),
+    Integer(1, 20, name='max_depth'),
+    Integer(2, 20, name='min_samples_split'),
+    Integer(1, 20, name='min_samples_leaf'),
+    Categorical([True, False], name='bootstrap')
+]
+
+
+# # Define the objective function
+# @use_named_args(param_space)
+# def objective(**params):
+#     classify_k_fold(com)
