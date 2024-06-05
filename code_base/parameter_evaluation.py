@@ -150,7 +150,7 @@ def bayesian_parameter_optimization(data_map, result_path):
         gl.oversample = params['oversampling']
         # Classify and return f1 score
         tmp = - clf.classify_k_fold(data_map.copy(), current_outcome, result_path, parameter_descriptor,
-                                    current_model, False, False)[0]
+                                    current_model, False, False)[1]
         return tmp[0]
 
     with open(stats_file_path, 'w') as stats_file:
