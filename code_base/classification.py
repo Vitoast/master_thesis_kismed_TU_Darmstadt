@@ -9,9 +9,6 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 import xgboost as xgb
-from skopt.utils import use_named_args
-from skopt import gp_minimize
-from skopt.space import Real, Integer, Categorical
 import pandas as pd
 import os
 import numpy as np
@@ -131,10 +128,15 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
     elif classification_descriptor == 'XGBoost':
         classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
 
-    # In case of erroneous empy data stop
+    # In case of erroneous empty data stop, return 0 to drop this configuration
     if len(x_train) == 0:
         print('No training data available with', outcome_target_index, classification_descriptor)
-        return np.nan, np.nan
+        return [0], [0]
+    # In case of too reduced data and only one class left in set abort, return 0 to drop this configuration
+    if len(np.unique(y_train)) == 1:
+        print('Too many points deleted, solver not trainable with', gl.outcome_descriptors[outcome_target_index],
+              outcome_target_index, classification_descriptor)
+        return [0], [0]
 
     # Fit model and predict on test set
     classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
@@ -213,21 +215,3 @@ def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classi
 
     # Return mean of accuracy and f1 score of all predictions
     return np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0)
-
-
-# Define the hyperparameter space
-param_space = [
-    Categorical(['mean', 'median', 'most_frequent'], name='imputer_strategy'),
-    Categorical(['standard', 'minmax'], name='scaler_type'),
-    Integer(10, 200, name='n_estimators'),
-    Integer(1, 20, name='max_depth'),
-    Integer(2, 20, name='min_samples_split'),
-    Integer(1, 20, name='min_samples_leaf'),
-    Categorical([True, False], name='bootstrap')
-]
-
-
-# # Define the objective function
-# @use_named_args(param_space)
-# def objective(**params):
-#     classify_k_fold(com)

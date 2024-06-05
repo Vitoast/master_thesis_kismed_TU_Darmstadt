@@ -1,6 +1,9 @@
 import classification as clf
 import seaborn as sns
 import matplotlib.pyplot as plt
+from skopt.utils import use_named_args
+from skopt import gp_minimize
+from skopt.space import Real, Integer, Categorical
 import numpy as np
 import os
 import preprocess_data as pre
@@ -20,13 +23,14 @@ def create_result_structure():
 
 
 # save results as plot
-def plot_parameter_evaluation(accuracy_results, f1_score_results, x_axis, result_path, title, xlabel, ylabel, plot_name):
+def plot_parameter_evaluation(accuracy_results, f1_score_results, x_axis, result_path, title, xlabel, ylabel,
+                              plot_name):
     for outcome in range(len(gl.outcome_descriptors)):
         ax = plt.subplot(111)
 
         # Plot a scatter plot of the data including a regression line
         for model in range(len(gl.classifiers)):
-            plt.scatter(x=x_axis[outcome], # fix this for imp and z !!!
+            plt.scatter(x=x_axis[outcome],  # fix this for imp and z !!!
                         y=f1_score_results[outcome][model],
                         color=gl.classifier_colors[model], label=gl.classifiers[model])
         box = ax.get_position()
@@ -119,3 +123,45 @@ def find_best_z_score_filter(data_map, result_path):
                               list(range(gl.min_test_threshold, gl.max_test_threshold)),
                               save_result_path, 'Z-score outlier filter test study ',
                               'Z-score threshold', 'F1-score', '_z_score_plot')
+
+
+def bayesian_parameter_optimization(data_map, result_path):
+    stats_directory_path = os.path.join(result_path, 'bayesian_parameter_optimization')
+    os.makedirs(stats_directory_path, exist_ok=True)
+    stats_file_path = os.path.join(stats_directory_path, 'bayesian_parameter_optimization.txt')
+    # Define the hyperparameter space
+    param_space = [
+        Categorical([True, False], name='standardize'),
+        Categorical(['mean_std', 'median_std', 'mean_group', 'median_group'], name='imputation_strategy'),
+        Integer(gl.min_test_threshold, gl.max_test_threshold, name='z_score'),
+        Integer(0, 1, name='oversampling'),
+    ]
+    current_outcome = 0
+    current_model = ''
+    parameter_descriptor = [gl.standardize, gl.impute, gl.filter_outliers_z_score, gl.oversample]
+
+    # Define the objective function to wrap classification process
+    @use_named_args(param_space)
+    def objective(**params):
+        # Apply parameters
+        gl.standardize = params['standardize']
+        gl.impute = params['imputation_strategy']
+        gl.filter_outliers_z_score = params['z_score']
+        gl.oversample = params['oversampling']
+        # Classify and return f1 score
+        tmp = - clf.classify_k_fold(data_map.copy(), current_outcome, result_path, parameter_descriptor,
+                                    current_model, False, False)[0]
+        return tmp[0]
+
+    with open(stats_file_path, 'w') as stats_file:
+
+        # Do optimization separately for each outcome and model
+        for outcome in range(1, gl.number_outcomes):
+            current_outcome = outcome
+            for model in gl.classifiers:
+                current_model = model
+                # Minimize objective function
+                result = gp_minimize(objective, dimensions=param_space, n_calls=100, random_state=42)
+                best_parameters = result.x
+                best_score = - result.fun
+                stats_file.write(f'{gl.outcome_descriptors[outcome]},{model},{best_parameters},{best_score},\n')

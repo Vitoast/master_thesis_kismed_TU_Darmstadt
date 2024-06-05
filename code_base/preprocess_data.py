@@ -8,7 +8,10 @@ import global_variables as gl
 
 # Returns an array of booleans that tell if a point is outside the threshold * std_deviation from the median
 def filter_by_z_score(data, center, threshold):
-    z_scores = np.abs((data - center) / np.std(data))
+    if np.std(data) != 0:
+        z_scores = np.abs((data - center) / np.std(data))
+    else:
+        z_scores = np.zeros(len(data))
     return z_scores <= threshold
 
 
@@ -137,4 +140,6 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     # print('Oversampled', multiplier, 'times, achieved class rate: ', current_class_rate)
 
     # Return processed train and test sets
+    if len(train_data_dictionary[list(train_data_dictionary.keys())[0]]) == 0:
+        return 89
     return train_data_dictionary, test_data_dictionary

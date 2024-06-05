@@ -35,6 +35,7 @@ def main():
     # pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
     # pe.find_best_imputation(complete_data_map, result_path)
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
+    pe.bayesian_parameter_optimization(complete_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
     exploration_result_path = os.path.join(result_path, 'exploration_results')
@@ -44,7 +45,7 @@ def main():
     # else:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
     umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
-    exp.plot_umap(complete_data_map, umap_exploration_result_path)
+    # exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
     # Compute correlation metrics
     # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
