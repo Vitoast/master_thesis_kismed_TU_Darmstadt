@@ -125,7 +125,8 @@ def find_best_z_score_filter(data_map, result_path):
                               'Z-score threshold', 'F1-score', '_z_score_plot')
 
 
-def bayesian_parameter_optimization(data_map, result_path):
+# Perform a bayesian optimization on the hyperparameter of the data preprocessing
+def bayesian_parameter_optimization(train_data_map, test_data_map, result_path):
     stats_directory_path = os.path.join(result_path, 'bayesian_parameter_optimization')
     os.makedirs(stats_directory_path, exist_ok=True)
     stats_file_path = os.path.join(stats_directory_path, 'bayesian_parameter_optimization.txt')
@@ -149,14 +150,14 @@ def bayesian_parameter_optimization(data_map, result_path):
         gl.filter_outliers_z_score = params['z_score']
         gl.oversample = params['oversampling']
         # Classify and return f1 score
-        tmp = - clf.classify_k_fold(data_map.copy(), current_outcome, result_path, parameter_descriptor,
+        tmp = clf.classify(train_data_map.copy(), test_data_map.copy(), current_outcome, result_path, parameter_descriptor,
                                     current_model, False, False)[1]
-        return tmp[0]
+        return - tmp[0]
 
     with open(stats_file_path, 'w') as stats_file:
 
         # Do optimization separately for each outcome and model
-        for outcome in range(1, gl.number_outcomes):
+        for outcome in range(0, gl.number_outcomes):
             current_outcome = outcome
             for model in gl.classifiers:
                 current_model = model
@@ -165,3 +166,45 @@ def bayesian_parameter_optimization(data_map, result_path):
                 best_parameters = result.x
                 best_score = - result.fun
                 stats_file.write(f'{gl.outcome_descriptors[outcome]},{model},{best_parameters},{best_score},\n')
+
+    # Plot results
+    plot_bayesian_optimization_results(stats_file_path, result_path)
+
+
+# Take the output file of bayesian_parameter_optimization and plot it
+def plot_bayesian_optimization_results(result_file_path, result_directory):
+    os.makedirs(result_directory, exist_ok=True)
+    f1_score_results = create_result_structure()[0]
+
+    # Read the file line by line
+    with open(result_file_path, 'r') as file:
+        for line in file:
+            # Strip the line of any leading/trailing whitespace and split by comma
+            parts = line.strip().split(',')
+
+            # Extract the relevant parts
+            outcome_descriptor = parts[0]
+            model_descriptor = parts[1]
+            f1_score = float(parts[-2])  # Convert the last value to float
+
+            f1_score_results[gl.outcome_descriptors.index(outcome_descriptor)][gl.classifiers.index(model_descriptor)].append(f1_score)
+
+    for outcome in range(len(gl.outcome_descriptors)):
+        ax = plt.subplot(111)
+        plot_name = 'bayesian_optimization_results_for_' + gl.outcome_descriptors[outcome]
+
+        # Plot a scatter plot of the data including a regression line
+        for model in range(len(gl.classifiers)):
+            plt.scatter(x=model,
+                        y=f1_score_results[outcome][model],
+                        color=gl.classifier_colors[model], label=gl.classifiers[model])
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 1, box.height])
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.title('Bayesian Optimization Results\nof Preprocessing Hyperparameters for ' + gl.outcome_descriptors[outcome])
+        plt.xlabel('Model')
+        plt.ylabel('Achieved F1-score')
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(os.path.join(result_directory, plot_name))
+        plt.close()
