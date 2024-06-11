@@ -35,7 +35,8 @@ def main():
     # pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
     # pe.find_best_imputation(complete_data_map, result_path)
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
-    pe.bayesian_parameter_optimization(train_data_map, test_data_map, parameter_evaluation_result_path)
+    # pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
+    pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
     exploration_result_path = os.path.join(result_path, 'exploration_results')
