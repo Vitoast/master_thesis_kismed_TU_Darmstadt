@@ -239,7 +239,7 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
             # if classification_descriptor == 'DecisionTree': continue
             # if classification_descriptor == 'SVM': continue
             # if classification_descriptor == 'RandomForest': continue
-            if classification_descriptor == 'XGBoost': continue # FIXXX
+            # if classification_descriptor == 'XGBoost': continue  # FIXXX
 
             # Define the hyperparameter space depending on the current model
             if classification_descriptor == 'NaiveBayes':
@@ -328,9 +328,8 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                     'max_bin': [256, 512, 1024],
                     'grow_policy': ['depthwise', 'lossguide'],
                     'learning_rate': [0.01, 0.05, 0.1, 0.2],
-                    'objective': ['reg:squarederror', 'binary:logistic', 'multi:softprob'],
                     'booster': ['gbtree', 'gblinear', 'dart'],
-                    'tree_method': ['auto', 'exact', 'approx', 'hist', 'gpu_hist'],
+                    'tree_method': ['auto', 'exact', 'approx', 'hist'],
                     'gamma': [0, 0.1, 0.2, 0.5, 1.0],
                     'min_child_weight': [1, 5, 10, 20],
                     'max_delta_step': [0, 0.1, 0.5, 1.0],
@@ -339,7 +338,6 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                 classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
 
             for outcome in range(0, gl.number_outcomes):
-
                 # Find matching configuration in precomputed data
                 current_configurations = next((value for key, value in gl.preprocess_parameters.items()
                                                if gl.outcome_descriptors[outcome] in key
@@ -379,8 +377,18 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                 #         super()._fit(X, y, groups, **fit_params)
 
                 # Initialize bayesian optimization
-                opt = BayesSearchCV(estimator=classifier, search_spaces=param_space, n_iter=50, cv=3, random_state=42,
-                                          n_jobs=-1, scoring=f1_scorer)
+                opt = BayesSearchCV(
+                    estimator=classifier,
+                    search_spaces=param_space,
+                    # fit_params=fit_params,
+                    cv=3,
+                    n_iter=50,
+                    random_state=42,
+                    scoring=f1_scorer,
+                    verbose=1,
+                )
+
+
                 # Perform the optimization with the preprocessed data
                 opt.fit(x_train, y_train)
 

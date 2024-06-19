@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import csv
 import os
 import explorational_data_analysis as exp
 import global_variables as gl
@@ -70,11 +71,34 @@ def check_feature_variance_inflation(train_data_map, result_path):
 
     # Us statsmodels library to compute vifs
     vif_df["VIF"] = [variance_inflation_factor(df.values, i) for i in range(len(df.columns))]
-    vifs = vif_df["VIF"]
+    # vifs = vif_df["VIF"]
 
     # Get the highest value and return it
     worst_feature = vif_df.loc[vif_df['VIF'].idxmax()]
-    return worst_feature, vifs
+    return worst_feature
+
+
+# Test
+def read_csv_results(result_directory, mapmap):
+    stats_file_path = os.path.join(result_directory, "ablation_study_vifs.txt")
+
+    odd_index_entries = []
+    even_index_entries = []
+
+    with open(stats_file_path, mode='r', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+
+        for row in reader:
+            odd_entries = [row[i] for i in range(len(row)) if i % 2 != 0]  # odd indices
+            even_entries = [row[i] for i in range(len(row)) if i % 2 == 0]  # even indices
+
+            odd_index_entries.append(odd_entries)
+            even_index_entries.append(even_entries)
+
+        for entry in even_index_entries:
+            mapmap.pop(entry)
+
+    return mapmap
 
 
 # Check the features of a data set by their vif and eliminate the highest in each iteration
@@ -92,31 +116,48 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
     reference_map = complete_data_map.copy()
     reference_map, rest = pre.preprocess_data(reference_map, reference_map.copy(), 0,
                                               gl.standardize, gl.impute, gl.max_test_threshold, gl.oversample)
+    # Get rid of the first column that is the outcome
     reference_map.pop(list(reference_map.keys())[0])
-    tmp = list(reference_map.keys())
+    # Save length of map for later use
+    number_of_features = len(list(reference_map.keys()))
     #  !!! Temporary pop most of the map for testing !!!
-    for key in list(complete_data_map.keys())[55:len(complete_data_map.keys()) - 1]:
-        complete_data_map.pop(key)
-        if key in tmp:
-            reference_map.pop(key)
+    # tmp = list(reference_map.keys())
+    # for key in list(complete_data_map.keys())[10:len(complete_data_map.keys()) - 1]:
+    #     complete_data_map.pop(key)
+    #     if key in tmp:
+    #         reference_map.pop(key)
 
     # Open file to save results
     with open(stats_file_path, 'w') as stats_file:
 
-        # Perform feature elimination and classification until only a few features are left
+        # Perform feature elimination and classification until only one feature is left
         for feature_count in range(0, len(complete_data_map.keys()) - gl.number_outcomes - 2):
             # Use Variance Inflation Factors for each feature and get highest as worst
-            worst_feature, vifs = check_feature_variance_inflation(reference_map, result_path)
+            worst_feature = check_feature_variance_inflation(reference_map, result_path)
             # Eliminate feature
             complete_data_map.pop(worst_feature['feature'])
             reference_map.pop(worst_feature['feature'])
             removed_features.append(worst_feature['feature'])
             print(f'Remove from training data:', worst_feature['feature'], "with vif:", worst_feature['VIF'],
-                  ", features left:", len(complete_data_map) - 5)
+                  ", features left:", number_of_features)
+            number_of_features -= 1
+            # Stop calculation with vif of 1, here there is no point in continuing (outcome would be random)
+            if worst_feature['VIF'] >= 1.01:
+                continue
 
             # Then perform classification with all given models and evaluate the performance with f1 score
             for model in gl.classifiers:
                 for outcome_value in range(gl.number_outcomes):
+                    # Find matching configuration in precomputed data
+                    current_configurations = next((value for key, value in gl.preprocess_parameters.items()
+                                                   if gl.outcome_descriptors[outcome_value] in key
+                                                   and model in key), None)
+                    # Define preprocessing parameters based on former optimization
+                    gl.standardize = current_configurations[0]
+                    gl.impute = current_configurations[1]
+                    gl.z_score_threshold = current_configurations[2]
+                    gl.oversample_rate = current_configurations[3]
+                    # Train and predict with k-fold validation
                     accuracy_results, f1_scores = clf.classify_k_fold(complete_data_map, outcome_value,
                                                                       result_path, [],
                                                                       model, False, False)

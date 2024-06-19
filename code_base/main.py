@@ -36,7 +36,7 @@ def main():
     # pe.find_best_imputation(complete_data_map, result_path)
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
     # pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
-    pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
+    # pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
     exploration_result_path = os.path.join(result_path, 'exploration_results')
@@ -49,7 +49,7 @@ def main():
     # exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
     # Compute correlation metrics
-    # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
+    cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
 
@@ -75,6 +75,7 @@ def main():
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
+    # fe.read_csv_results(feature_evaluation_result_path, complete_data_map)
     # fe.perform_feature_ablation_study_vif(complete_data_map, feature_evaluation_result_path)
     # fe.perform_feature_ablation_study_performance(complete_data_map, feature_evaluation_result_path)
 
