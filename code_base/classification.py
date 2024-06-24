@@ -86,11 +86,26 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
 # Classify for one outcome with a naive Bayesian classifier
 def classify(train_data_map, test_data_map, outcome_target_index, result_path, parameter_descriptor,
              classification_descriptor, print_model_details=False, save_model_details=True):
-    train_data_map, test_data_map = pre.preprocess_data(train_data_map, test_data_map, outcome_target_index,
-                                                        standardize=gl.standardize,
-                                                        impute=gl.impute, z_score_threshold=gl.filter_outliers_z_score,
-                                                        oversample_rate=gl.oversample)
-    x_train, x_test, y_train, y_test = split_maps(train_data_map, test_data_map)
+
+    # Find matching configuration in precomputed data
+    current_configurations = next((value for key, value in gl.preprocess_parameters.items()
+                                   if gl.outcome_descriptors[outcome_target_index] in key
+                                   and classification_descriptor in key), None)
+    # Define preprocessing parameters based on former optimization
+    current_standardize = current_configurations[0]
+    current_impute = current_configurations[1]
+    current_z_score_threshold = current_configurations[2]
+    current_oversample_rate = current_configurations[3]
+
+    # Preprocess data accordingly
+    tmp_train_data_map, tmp_test_data_map = pre.preprocess_data(train_data_map.copy(), test_data_map.copy(),
+                                                                outcome_target_index,
+                                                                standardize=current_standardize,
+                                                                impute=current_impute,
+                                                                z_score_threshold=current_z_score_threshold,
+                                                                oversample_rate=current_oversample_rate)
+
+    x_train, x_test, y_train, y_test = split_maps(tmp_train_data_map, tmp_test_data_map)
     y_train = np.array(y_train).flatten()
     y_test = np.array(y_test).flatten()
 
@@ -101,7 +116,7 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
 
     # Train model and predict
-    accuracy_results, f1_scores = classify_internal(x_train, x_test, y_train, y_test, train_data_map,
+    accuracy_results, f1_scores = classify_internal(x_train, x_test, y_train, y_test, tmp_train_data_map,
                                                     outcome_target_index, result_path, parameter_descriptor,
                                                     classification_descriptor, print_model_details)
 

@@ -71,7 +71,6 @@ def check_feature_variance_inflation(train_data_map, result_path):
 
     # Us statsmodels library to compute vifs
     vif_df["VIF"] = [variance_inflation_factor(df.values, i) for i in range(len(df.columns))]
-    # vifs = vif_df["VIF"]
 
     # Get the highest value and return it
     worst_feature = vif_df.loc[vif_df['VIF'].idxmax()]
@@ -79,7 +78,7 @@ def check_feature_variance_inflation(train_data_map, result_path):
 
 
 # Test
-def read_csv_results(result_directory, mapmap):
+def read_feature_ablation_csv_file_vif(result_directory, mapmap):
     stats_file_path = os.path.join(result_directory, "ablation_study_vifs.txt")
 
     odd_index_entries = []
@@ -101,6 +100,25 @@ def read_csv_results(result_directory, mapmap):
     return mapmap
 
 
+# Read the results from a former feature ablation study
+# It has one line with the deleted feature, the f1-score and the accuracy of each iteration
+def read_feature_ablation_csv_file_performance(filename):
+    markers, f1_scores, accuracies = [], [], []
+
+    with open(filename, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            for i, value in enumerate(row):
+                if i % 3 == 0:
+                    markers.append(value)
+                elif i % 3 == 1:
+                    f1_scores.append(float(value.strip('[]')))
+                elif i % 3 == 2:
+                    accuracies.append(float(value.strip('[]')))
+
+    return markers, f1_scores, accuracies
+
+
 # Check the features of a data set by their vif and eliminate the highest in each iteration
 # Then train classifiers and evaluate their performance without the feature
 def perform_feature_ablation_study_vif(complete_data_map, result_directory):
@@ -108,6 +126,7 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
     os.makedirs(result_directory, exist_ok=True)
     result_file_name = "feature_ablation_study_vif"
     stats_file_path = os.path.join(result_directory, "ablation_study_vifs.txt")
+    leftover_features_file_path = os.path.join(result_directory, "leftover_features_vif.txt")
     result_path = os.path.join(result_directory, result_file_name)
     outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
     # Prepare data structures that hold outcomes of study
@@ -127,6 +146,7 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
     #     if key in tmp:
     #         reference_map.pop(key)
 
+    stop_iterations = False
     # Open file to save results
     with open(stats_file_path, 'w') as stats_file:
 
@@ -134,6 +154,10 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
         for feature_count in range(0, len(complete_data_map.keys()) - gl.number_outcomes - 2):
             # Use Variance Inflation Factors for each feature and get highest as worst
             worst_feature = check_feature_variance_inflation(reference_map, result_path)
+            # Stop calculation with vif of 1, here there is no point in continuing (outcome would be random)
+            if worst_feature['VIF'] <= 1.01:
+                stop_iterations = True
+                break
             # Eliminate feature
             complete_data_map.pop(worst_feature['feature'])
             reference_map.pop(worst_feature['feature'])
@@ -141,9 +165,6 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
             print(f'Remove from training data:', worst_feature['feature'], "with vif:", worst_feature['VIF'],
                   ", features left:", number_of_features)
             number_of_features -= 1
-            # Stop calculation with vif of 1, here there is no point in continuing (outcome would be random)
-            if worst_feature['VIF'] >= 1.01:
-                continue
 
             # Then perform classification with all given models and evaluate the performance with f1 score
             for model in gl.classifiers:
@@ -176,6 +197,12 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
                                      exp.clean_feature_name(worst_feature['feature']))
             stats_file.write(f"{worst_feature['feature']},{worst_feature['VIF']},")
 
+    # Save leftover features
+    if stop_iterations:
+        with open(leftover_features_file_path, 'w') as leftover_features:
+            for feature_name in reference_map.keys():
+                leftover_features.write(f"{feature_name},")
+
     # Plot resulting f1 score curve for each outcome and model
     for outcome in range(gl.number_outcomes):
         temp_accuracies = accuracies_per_outcome[outcome]
@@ -189,8 +216,8 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
 # Therefore train classifiers and evaluate their performance without the feature
 def perform_feature_ablation_study_performance(complete_data_map, result_directory):
     #  !!! Temporary kick out most data to quicken debugging !!!
-    for kickout in range(len(complete_data_map.keys()) - 1, 50, -1):
-        complete_data_map.pop(list(complete_data_map.keys())[kickout])
+    # for kickout in range(len(complete_data_map.keys()) - 1, 10, -1):
+    #     complete_data_map.pop(list(complete_data_map.keys())[kickout])
     # Prepare data structures
     os.makedirs(result_directory, exist_ok=True)
     result_file_name = "feature_ablation_study_performance"
@@ -217,7 +244,7 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
             with open(stats_file_path, 'w') as stats_file:
 
                 # Perform feature elimination and classification until only a few features are left
-                for feature_count in range(0, len(complete_data_map.keys()) - gl.number_outcomes - 2):
+                for feature_count in range(0, len(complete_data_map.keys()) - 11):  #gl.number_outcomes ):
                     removed_feature_trials = []
                     accuracy_ablation_results = []
                     f1_score_ablation_results = []
@@ -225,7 +252,8 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
                     # Leave out each feature and train on remaining data
                     for feature_name, feature_data in reference_map.copy().items():
                         # Skip outcome classes
-                        if feature_name in gl.original_outcome_strings or any(isinstance(elem, str) for elem in feature_data):
+                        if feature_name in gl.original_outcome_strings or any(
+                                isinstance(elem, str) for elem in feature_data):
                             continue
 
                         # Delete feature testwise
@@ -250,7 +278,8 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
                     reference_map.pop(worst_feature)
                     removed_features[model].append(worst_feature)
                     # Save information about what was deleted
-                    stats_file.write(f"{worst_feature},{f1_score_ablation_results[worst_feature_idx]},")
+                    stats_file.write(
+                        f"{worst_feature},{f1_score_ablation_results[worst_feature_idx]},{accuracy_ablation_results[worst_feature_idx]},")
                     print('Feature', worst_feature, 'deleted for', gl.outcome_descriptors[outcome],
                           gl.classifiers[model], 'with F1-Score', f1_score_ablation_results[worst_feature_idx])
 
@@ -258,3 +287,28 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
         plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, removed_features[0],
                                       outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome])
+
+
+# Read the saved SCV file from an ablation study and plot the results
+def plot_former_feature_ablation(result_directory):
+    all_f1_scores, all_accuracies = pe.create_result_structure()
+    os.makedirs(result_directory, exist_ok=True)
+    result_file_name = "feature_ablation_study_performance"
+    result_path = os.path.join(result_directory, result_file_name)
+    outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
+
+    for outcome in range(gl.number_outcomes):
+        markers = []
+
+        for model in range(len(gl.classifiers)):
+            stats_file_path = os.path.join(result_directory,
+                                           gl.outcome_descriptors[outcome] + '_'
+                                           + gl.classifiers[model] + "_ablation_study_performance.txt")
+            markers, f1_scores, accuracies = read_feature_ablation_csv_file_performance(stats_file_path)
+            all_f1_scores[outcome][model] = f1_scores
+            all_accuracies[outcome][model] = accuracies
+
+        if "" in markers: markers.pop(len(markers) - 1)
+
+        plot_feature_ablation_results(all_accuracies[outcome], all_f1_scores[outcome], markers,
+                                      outcome_result_paths[outcome] + '_replot', gl.outcome_descriptors[outcome])

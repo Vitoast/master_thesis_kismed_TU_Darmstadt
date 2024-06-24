@@ -6,6 +6,15 @@ number_outcomes = 5
 # List used to save complete descriptors of adverse outcomes in data
 original_outcome_strings = []
 
+# Descriptors used to divide the data into subsets
+# Add the specific string to the general descriptor to use that block of data
+#   'PRE' for computed clinical markers before anesthesia
+#   'POST' for computed clinical markers after anesthesia
+#   'BEFORE' for demographic data and data collected before surgery
+#   'DURING' for data about the surgery process
+#   'AFTER' for data collected after surgery
+marker_blocks_to_use = ['PRE_POST_BEFORE_DURING_AFTER']
+
 # Uniform colors for plots of used models
 classifier_colors = ['red', 'orange', 'green', 'purple', 'black', 'blue']
 
