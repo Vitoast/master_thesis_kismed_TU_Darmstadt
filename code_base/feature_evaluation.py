@@ -42,8 +42,12 @@ def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, rem
     # Plot a scatter plot of the data including a regression line
     for model in range(len(accuracies_per_model)):
         # ax.scatter(feature_counts, accuracies_per_model[model], label=classifiers[model]+'_accuracy')
-        sns.regplot(x=feature_counts, y=f1_scores_per_model[model], scatter_kws={"color": gl.classifier_colors[model]},
-                    line_kws={"color": gl.classifier_colors[model]}, order=6, label=gl.classifiers[model])
+        if len(removed_features) > 50 :
+            sns.regplot(x=feature_counts, y=f1_scores_per_model[model], scatter_kws={"color": gl.classifier_colors[model]},
+                        line_kws={"color": gl.classifier_colors[model]}, order=6, label=gl.classifiers[model])
+        else:
+            plt.scatter(x=feature_counts, y=f1_scores_per_model[model], color=gl.classifier_colors[model],
+                        label=gl.classifiers[model])
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 1, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -77,31 +81,28 @@ def check_feature_variance_inflation(train_data_map, result_path):
     return worst_feature
 
 
-# Test
-def read_feature_ablation_csv_file_vif(result_directory, mapmap):
-    stats_file_path = os.path.join(result_directory, "ablation_study_vifs.txt")
+# Read in the result file of a vif ablation study
+# It has one line with the deleted feature and the f1-score of each iteration comma separated
+def read_feature_ablation_csv_file_vif(stats_file_path):
 
-    odd_index_entries = []
-    even_index_entries = []
+    marker_names = []
+    f1_scores = []
 
     with open(stats_file_path, mode='r', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
 
         for row in reader:
-            odd_entries = [row[i] for i in range(len(row)) if i % 2 != 0]  # odd indices
-            even_entries = [row[i] for i in range(len(row)) if i % 2 == 0]  # even indices
+            current_scores = [row[i] for i in range(len(row)) if i % 2 != 0]  # odd indices
+            current_markers = [row[i] for i in range(len(row)) if i % 2 == 0]  # even indices
 
-            odd_index_entries.append(odd_entries)
-            even_index_entries.append(even_entries)
+            marker_names.append(current_markers)
+            f1_scores.append(current_scores)
 
-        for entry in even_index_entries:
-            mapmap.pop(entry)
-
-    return mapmap
+    return marker_names, f1_scores
 
 
-# Read the results from a former feature ablation study
-# It has one line with the deleted feature, the f1-score and the accuracy of each iteration
+# Read the results from a former performance feature ablation study
+# It has one line with the deleted feature, the f1-score and the accuracy of each iteration comma separated
 def read_feature_ablation_csv_file_performance(filename):
     markers, f1_scores, accuracies = [], [], []
 
@@ -212,6 +213,23 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
                                       gl.outcome_descriptors[outcome])
 
 
+# To continue an ablation study with vifs of only 1.0 performance can be used as measure
+# Since it would be random otherwise
+def continue_performance_ablation_after_vif(result_directory, result_file, complete_data_map):
+    os.makedirs(result_directory, exist_ok=True)
+    if result_file == "":
+        result_file = os.path.join(result_directory, "ablation_study_vifs.txt")
+    # Read vif ablation results
+    deleted_features, f1_scores = read_feature_ablation_csv_file_vif(result_file)
+    # Remove deleted features from set
+    working_map = complete_data_map.copy()
+    for feature_name in sum(deleted_features, []):
+        if feature_name == "": continue
+        working_map.pop(feature_name)
+    # Continue ablation with remaining features
+    perform_feature_ablation_study_performance(working_map, result_directory)
+
+
 # Check the features of a data set by their influence on performance and eliminate the worst in each iteration
 # Therefore train classifiers and evaluate their performance without the feature
 def perform_feature_ablation_study_performance(complete_data_map, result_directory):
@@ -223,6 +241,8 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
     result_file_name = "feature_ablation_study_performance"
     result_path = os.path.join(result_directory, result_file_name)
     outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
+
+    complete_data_map = pre.filter_data_sub_sets(complete_data_map)
 
     # Do all iterations per outcome
     for outcome in range(gl.number_outcomes):
@@ -244,7 +264,7 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
             with open(stats_file_path, 'w') as stats_file:
 
                 # Perform feature elimination and classification until only a few features are left
-                for feature_count in range(0, len(complete_data_map.keys()) - 11):  #gl.number_outcomes ):
+                for feature_count in range(0, len(complete_data_map.keys()) - gl.number_outcomes):
                     removed_feature_trials = []
                     accuracy_ablation_results = []
                     f1_score_ablation_results = []

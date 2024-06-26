@@ -77,23 +77,16 @@ def main():
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
     # fe.read_csv_results(feature_evaluation_result_path, complete_data_map)
     # fe.plot_former_feature_ablation(feature_evaluation_result_path)
-    fe.perform_feature_ablation_study_vif(complete_data_map, feature_evaluation_result_path)
+    # fe.perform_feature_ablation_study_vif(complete_data_map, feature_evaluation_result_path)
+    # fe.continue_performance_ablation_after_vif(feature_evaluation_result_path, "", complete_data_map)
     # fe.perform_feature_ablation_study_performance(complete_data_map, feature_evaluation_result_path)
 
-
-    # accuracies_per_model = [[0.5, 0.3, 0.6], [0.8, 0.3, 0.6], [0.5, 0.3, 0.7], [0.8, 0.3, 0.7], [0.5, 0.3, 0.7]]
-    # f1_scores_per_model = [[0.2, 0.2, 0.1], [0.1, 0.2, 0.1], [0.05, 0.2, 0.1], [0.2, 0.6, 0.1], [0.2, 0.8, 0.1]]
-    # removed_features = ['1', '2', '3']
-    # fe.plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, removed_features, result_path, classifiers, 'test')
-
-    ''' 
-    # Print the resulting dictionary
-
-    for feature_name, feature_data in data_map.items():
-        print(f"Feature Name: {feature_name}")
-        print(f"Feature Data: {feature_data}")
-        print()
-    '''
+    # Do the ablation study for each subset of interest of the data set
+    for data_set in gl.possible_feature_combinations:
+        current_result_path = os.path.join(feature_evaluation_result_path, data_set)
+        gl.feature_blocks_to_use = data_set
+        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
+        fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
 
 
 if __name__ == "__main__":

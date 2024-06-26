@@ -29,6 +29,10 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
         print('Invalid imputation method')
         return
 
+    train_data_dictionary = filter_data_sub_sets(train_data_dictionary)
+    test_data_dictionary = filter_data_sub_sets(test_data_dictionary)
+
+    # Setup scaling instance
     scaler = StandardScaler()
     # Threshold for outlier filtering, all values further away than threshold * std_deviation from median are abandoned
     feature_to_remove = []
@@ -76,7 +80,7 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
         # Preprocess only numerical data, remove all features that are strings or do not contain information
         if not any(isinstance(elem, str) for elem in train_feature_data) and len(set(train_feature_data)) > 1:
             # Remove first columns with outcomes
-            if feature_count <= gl.number_outcomes and feature_count != outcome_target_index + 1:
+            if feature_count < gl.number_outcomes and feature_count != outcome_target_index:
                 feature_to_remove.append(train_feature_name)
             else:
 
@@ -101,7 +105,7 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
                 if standardize and not np.all(np.isin(train_feature_data, [0, 1])):
                     train_data_dictionary[train_feature_name] = np.reshape(scaler.fit_transform(
                         np.reshape(train_data_dictionary[train_feature_name], (-1, 1))), (-1,))
-                    if len(test_data_dictionary[test_feature_name])==0:
+                    if len(test_data_dictionary[test_feature_name]) == 0:
                         whatever = 0
                     test_data_dictionary[test_feature_name] = np.reshape(scaler.transform(
                         np.reshape(test_data_dictionary[test_feature_name], (-1, 1))), (-1,))
@@ -143,3 +147,39 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     if len(train_data_dictionary[list(train_data_dictionary.keys())[0]]) == 0:
         return 89
     return train_data_dictionary, test_data_dictionary
+
+
+def filter_data_sub_sets(data_map):
+    # According to the global settings remove data if it should be neglected in this run
+    tmp_data_map = data_map.copy()
+    before_data_reached, during_data_reached, after_data_reached = False, False, False
+
+    for key in data_map.keys():
+        # Remove String data
+        if not all(isinstance(x, (int, float)) for x in data_map[key]):
+            tmp_data_map.pop(key)
+            continue
+
+        # Remove SAP and HP markers
+        if (('PRE' in key and 'PRE' not in gl.feature_blocks_to_use)
+                or ('POST' in key and 'POST' not in gl.feature_blocks_to_use)):
+            tmp_data_map.pop(key)
+            continue
+
+        # Blocks are sorted together, so always the first feature determines a new block
+        if key == 'Age':
+            before_data_reached = True
+        elif key == 'CPB_yes/no':
+            during_data_reached = True
+            before_data_reached = False
+        elif key == 'ICUStay(Days)':
+            after_data_reached = True
+            during_data_reached = False
+
+        # Remove clinical data
+        if ((before_data_reached and 'BEFORE' not in gl.feature_blocks_to_use)
+                or (during_data_reached and 'DURING' not in gl.feature_blocks_to_use)
+                or (after_data_reached and 'AFTER' not in gl.feature_blocks_to_use)):
+            tmp_data_map.pop(key)
+
+    return tmp_data_map

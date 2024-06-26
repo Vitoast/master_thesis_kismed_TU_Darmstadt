@@ -14,7 +14,7 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
     outcome_names, outcome_data = [], []
     marker_names, marker_data = [], []
     all_feature_names, all_feature_data = [], []
-    correlation_coefficients, p_values = [], []
+    correlation_coefficients, p_values, sorted_features = [], [], []
 
     # Filter markers based on their belonging to POST or PRE
     feature_count = 0
@@ -22,51 +22,63 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
         cleaned_feature_name = exp.clean_feature_name(feature_name)
         all_feature_names.append(cleaned_feature_name)
         all_feature_data.append(feature_data)
-        if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
-            marker_names.append(feature_name)
-            marker_data.append(feature_data)
-        elif feature_count < gl.number_outcomes and all(isinstance(x, (int, float)) for x in feature_data):
-            outcome_names.append(feature_name)
-            outcome_data.append(feature_data)
-            feature_count += 1
+        # if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
+        # Check if the feature data contains only numeric values
+        if all(isinstance(x, (int, float)) for x in feature_data):
+            if feature_count < gl.number_outcomes:
+                outcome_names.append(feature_name)
+                outcome_data.append(feature_data)
+                feature_count += 1
+            else:
+                marker_names.append(feature_name)
+                marker_data.append(feature_data)
 
     # Create plots with correlation values for time series markers
     for outcome in range(gl.number_outcomes):
         correlation_coefficients.append([])
         p_values.append([])
-        # Check if the feature data contains only numeric values
-        if all(isinstance(x, (int, float)) for x in outcome_data[outcome]):
-            for marker in range(len(marker_names)):
-                # Clean data from missing values
-                # Find indices where either array1 or array2 is NaN
-                nan_indices = np.logical_or(np.isnan(outcome_data[outcome]), np.isnan(marker_data[marker]))
-                # Remove entries at nan_indices from both arrays
-                markers_cleaned, outcomes_cleaned = [], []
-                for nan_index in range(len(nan_indices)):
-                    if not nan_indices[nan_index]:
-                        markers_cleaned.append(outcome_data[outcome][nan_index])
-                        outcomes_cleaned.append(marker_data[marker][nan_index])
-                point_biserial_corr, p_value = stats.pointbiserialr(markers_cleaned, outcomes_cleaned)
-                correlation_coefficients[outcome].append(point_biserial_corr)
-                p_values[outcome].append(p_value)
+        for marker in range(len(marker_names)):
+            # Clean data from missing values
+            # Find indices where either array1 or array2 is NaN
+            nan_indices = np.logical_or(np.isnan(outcome_data[outcome]), np.isnan(marker_data[marker]))
+            # Remove entries at nan_indices from both arrays
+            markers_cleaned, outcomes_cleaned = [], []
+            for nan_index in range(len(nan_indices)):
+                if not nan_indices[nan_index]:
+                    markers_cleaned.append(marker_data[marker][nan_index])
+                    outcomes_cleaned.append(outcome_data[outcome][nan_index])
+            point_biserial_corr, p_value = stats.pointbiserialr(markers_cleaned, outcomes_cleaned)
+            correlation_coefficients[outcome].append(point_biserial_corr)
+            p_values[outcome].append(p_value)
 
-            # Get absolute values, direction of correlation is not important
-            correlation_coefficients[outcome] = [abs(c) for c in correlation_coefficients[outcome]]
+        # Get absolute values, direction of correlation is not important
+        correlation_coefficients[outcome] = [abs(c) for c in correlation_coefficients[outcome]]
 
-            # Sort the correlation coefficients descending and reorder p-values accordingly
-            sorted_indices = np.argsort(correlation_coefficients[outcome])[::-1]
-            correlation_coefficients[outcome] = [correlation_coefficients[outcome][i] for i in sorted_indices]
-            p_values[outcome] = [p_values[outcome][i] for i in sorted_indices]
-            marker_names_sorted = [marker_names[i] for i in sorted_indices]
+        # Sort the correlation coefficients descending and reorder p-values accordingly
+        sorted_indices = np.argsort(correlation_coefficients[outcome])[::-1]
+        correlation_coefficients[outcome] = [correlation_coefficients[outcome][i] for i in sorted_indices]
+        p_values[outcome] = [p_values[outcome][i] for i in sorted_indices]
+        marker_names_sorted = [marker_names[i] for i in sorted_indices]
+        sorted_features.append(marker_names_sorted)
 
+        # Remove unusable data
+        sorted_features[outcome], correlation_coefficients[outcome], p_values[outcome] = (
+            zip(*[(v1, v2, v3) for v1, v2, v3 in
+                  zip(sorted_features[outcome], correlation_coefficients[outcome], p_values[outcome])
+                  if not (np.isnan(v2) or np.isnan(v3))]))
+
+        plot_correlation = len(correlation_coefficients) < 70
+        if plot_correlation:
             # Generate unique colors
-            colors = [plt.cm.get_cmap('viridis', len(correlation_coefficients[outcome]))(i) for i in range(len(correlation_coefficients[outcome]))]
+            colors = [plt.cm.get_cmap('viridis', len(correlation_coefficients[outcome]))(i)
+                      for i in range(len(correlation_coefficients[outcome]))]
 
             # Create the subplots
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
 
             # for descriptor in ['Correlation Coefficient', 'P-Value']:
-            for i, (coeff, color, name) in enumerate(zip(correlation_coefficients[outcome], colors, marker_names_sorted)):
+            for i, (coeff, color, name) in enumerate(
+                    zip(correlation_coefficients[outcome], colors, sorted_features[outcome])):
                 ax1.scatter(i, coeff, color=color, label=name)
             ax1.set_title('Sorted Absolute Correlation Coefficients of Markers with ' + gl.outcome_descriptors[outcome])
             ax1.set_xlabel('Marker')
@@ -94,7 +106,7 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
             plt.close()
 
     # Save correlation coefficients for all features
-    # save_feature_importance(outcome_names, outcome_data, all_feature_names, all_feature_data, output_directory)
+    save_feature_importance(sorted_features, correlation_coefficients, p_values, output_directory)
 
 
 # Compute and plot the correlation matrix of all PRE- and POST-surgery markers
@@ -149,36 +161,17 @@ def show_pairwise_marker_correlation(data_dictionary, output_directory):
             plt.close()
 
 
-def save_feature_importance(outcome_names, outcome_data, all_feature_names, all_feature_data, output_directory):
+# Save computed correlation coefficients in a file
+def save_feature_importance(marker_names, correlation_coefficients, p_values, output_directory):
     os.makedirs(output_directory, exist_ok=True)
-    stats_file_path = os.path.join(output_directory, 'correlation_coefficients.txt')
-    correlation_coefficients, p_values = [], []
-    sorted_features_result = []
+    #  Do correlation analysis for each outcome
+    for outcome in range(gl.number_outcomes):
 
-    # Open file to save results
-    with open(stats_file_path, 'w') as stats_file:
+        stats_file_path = os.path.join(output_directory,
+                                       gl.outcome_descriptors[outcome] + '_correlation_coefficients_sorted.txt')
 
-        #  Do correlation analysis for each outcome
-        for outcome in range(len(outcome_names)):
-            correlation_coefficients.append([])
-            p_values.append([])
-            # Compute correlation between outcome and feature
-            for feature in all_feature_names:
-                # Check if the feature data contains only numeric values
-                if all(isinstance(x, (int, float)) for x in all_feature_data[outcome]):
-                    point_biserial_corr, p_value = stats.pointbiserialr(feature, outcome_data[outcome])
-                    correlation_coefficients[outcome].append(point_biserial_corr)
-                    p_values[outcome].append(p_value)
-                else:
-                    all_feature_names.pop(all_feature_names.index(feature))
-
-            # Tie features together with their importance and print the sorted list, leaving out neglected features
-            features_with_correlation = list(zip(all_feature_names, correlation_coefficients[outcome], p_values[outcome]))
-            features_with_correlation_sorted = sorted(features_with_correlation, key=lambda x: x[1], reverse=True)
-            sorted_features_result.append(features_with_correlation_sorted)
-            stats_file.write(f'Sorted correlation coefficients for {outcome_names[outcome]},\n')
-            for feature_name, correlation, p_value in features_with_correlation_sorted:
+        # Open file to save results
+        with open(stats_file_path, 'w') as stats_file:
+            for feature_name, correlation, p_value in zip(marker_names[outcome], correlation_coefficients[outcome],
+                                                          p_values[outcome]):
                 stats_file.write(f'{feature_name},{correlation},{p_value},\n')
-
-    # return computed results
-    return sorted_features_result

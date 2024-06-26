@@ -251,11 +251,11 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
             elif classification_descriptor == 'LogisticRegression':
                 param_space = {
                     # 'penalty': ['l1', 'l2', 'elasticnet', 'none'],
-                    'tol': [1e-4, 1e-3, 1e-2, 1e-1],
+                    # 'tol': [1e-4, 1e-3, 1e-2, 1e-1],
                     'C': [0.01, 0.1, 1, 10, 100],
                     'class_weight': [None, 'balanced'],
                     'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'],
-                    'l1_ratio': Real(0, 1, prior='uniform')  # Only used by 'elasticnet' penalty
+                    # 'l1_ratio': Real(0, 1, prior='uniform')  # Only used by 'elasticnet' penalty
                 }
 
                 # Custom function to filter valid hyperparameter sets
@@ -275,16 +275,16 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
             elif classification_descriptor == 'DecisionTree':
                 param_space = {
                     'criterion': ['gini', 'entropy', 'log_loss'],
-                    'splitter': ['best', 'random'],
+                    # 'splitter': ['best', 'random'],
                     'max_depth': [None, 10, 20, 30, 40, 50],
                     'min_samples_split': [2, 5, 10],
                     'min_samples_leaf': [1, 2, 4],
-                    'min_weight_fraction_leaf': [0.0, 0.01, 0.05, 0.1],
+                    # 'min_weight_fraction_leaf': [0.0, 0.01, 0.05, 0.1],
                     'max_features': [None, 'sqrt', 'log2'],
-                    'max_leaf_nodes': [None, 10, 20, 30],
-                    'min_impurity_decrease': [0.0, 0.01, 0.1],
+                    # 'max_leaf_nodes': [None, 10, 20, 30],
+                    # 'min_impurity_decrease': [0.0, 0.01, 0.1],
                     'class_weight': [None, 'balanced'],
-                    'ccp_alpha': [0.0, 0.01, 0.1],
+                    # 'ccp_alpha': [0.0, 0.01, 0.1],
                 }
                 classifier = DecisionTreeClassifier()
 
@@ -294,10 +294,10 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                     'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
                     'degree': [2, 3, 4, 5],
                     'gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1],
-                    'coef0': [0.0, 0.1, 0.5, 1.0],
-                    'shrinking': [True, False],
-                    'probability': [True, False],
-                    'tol': [1e-4, 1e-3, 1e-2, 1e-1],
+                    # 'coef0': [0.0, 0.1, 0.5, 1.0],
+                    # 'shrinking': [True, False],
+                    # 'probability': [True, False],
+                    # 'tol': [1e-4, 1e-3, 1e-2, 1e-1],
                     'class_weight': [None, 'balanced'],
                 }
                 classifier = SVC()
@@ -308,31 +308,31 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                     'max_depth': [None, 10, 20, 30, 40, 50],
                     'min_samples_split': [2, 5, 10],
                     'min_samples_leaf': [1, 2, 4],
-                    'min_weight_fraction_leaf': [0.0, 0.01, 0.05, 0.1],
+                    # 'min_weight_fraction_leaf': [0.0, 0.01, 0.05, 0.1],
                     'max_features': [None, 'sqrt', 'log2'],
-                    'max_leaf_nodes': [None, 10, 20, 30],
-                    'min_impurity_decrease': [0.0, 0.01, 0.1],
-                    'bootstrap': [True, False],
+                    # 'max_leaf_nodes': [None, 10, 20, 30],
+                    # 'min_impurity_decrease': [0.0, 0.01, 0.1],
+                    # 'bootstrap': [True, False],
                     # 'oob_score': [True, False],
                     'class_weight': [None, 'balanced'],
-                    'ccp_alpha': [0.0, 0.01, 0.1],
+                    # 'ccp_alpha': [0.0, 0.01, 0.1],
                     # 'max_samples': [None, 0.5, 0.75, 1.0],
                 }
                 classifier = RandomForestClassifier()
 
             elif classification_descriptor == 'XGBoost':
                 param_space = {
-                    'n_estimators': [50, 100, 200, 300, 500],
-                    'max_depth': [3, 5, 7, 9, 12],
-                    'max_leaves': [0, 31, 63, 127],
-                    'max_bin': [256, 512, 1024],
-                    'grow_policy': ['depthwise', 'lossguide'],
+                    'n_estimators': [50, 100, 300],
+                    'max_depth': [3, 6, 9, 12],
+                    # 'max_leaves': [0, 31, 63, 127],
+                    # 'max_bin': [256, 512, 1024],
+                    # 'grow_policy': ['depthwise', 'lossguide'],
                     'learning_rate': [0.01, 0.05, 0.1, 0.2],
                     'booster': ['gbtree', 'gblinear', 'dart'],
-                    'tree_method': ['auto', 'exact', 'approx', 'hist'],
+                    # 'tree_method': ['auto', 'exact', 'approx', 'hist'],
                     'gamma': [0, 0.1, 0.2, 0.5, 1.0],
                     'min_child_weight': [1, 5, 10, 20],
-                    'max_delta_step': [0, 0.1, 0.5, 1.0],
+                    # 'max_delta_step': [0, 0.1, 0.5, 1.0],
                     'subsample': [0.5, 0.7, 0.8, 0.9, 1.0],
                 }
                 classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
@@ -387,7 +387,6 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                     scoring=f1_scorer,
                     verbose=1,
                 )
-
 
                 # Perform the optimization with the preprocessed data
                 opt.fit(x_train, y_train)

@@ -13,7 +13,12 @@ original_outcome_strings = []
 #   'BEFORE' for demographic data and data collected before surgery
 #   'DURING' for data about the surgery process
 #   'AFTER' for data collected after surgery
-marker_blocks_to_use = ['PRE_POST_BEFORE_DURING_AFTER']
+feature_blocks_to_use = ['PRE_POST_BEFORE_DURING_AFTER']
+possible_feature_combinations = ['PRE',
+                                 'POST',
+                                 'PRE_POST',
+                                 'PRE_POST_BEFORE',
+                                 'PRE_POST_BEFORE_DURING_AFTER']
 
 # Uniform colors for plots of used models
 classifier_colors = ['red', 'orange', 'green', 'purple', 'black', 'blue']
