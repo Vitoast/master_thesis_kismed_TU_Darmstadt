@@ -18,8 +18,8 @@ def filter_by_z_score(data, center, threshold):
 # Preprocess data to make it usable in classification
 # Involves: Imputation of missing values, standardization, outlier filtering and oversampling
 # Note: If grouped imputation or oversampling is enabled, order of data points will change
-def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_index, standardize, impute,
-                    z_score_threshold, oversample_rate):
+def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_index, standardize=gl.standardize,
+                    impute=gl.impute, z_score_threshold=gl.filter_outliers_z_score, oversample_rate=gl.oversample):
     # Create imputation instance to replace nan values in data
     if 'mean' in impute:
         imputer = SimpleImputer(missing_values=np.nan, strategy='mean')

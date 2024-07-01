@@ -1,5 +1,6 @@
 # String descriptors of used classifiers
-classifiers = ['NaiveBayes', 'LogisticRegression', 'DecisionTree', 'SVM', 'RandomForest', 'XGBoost']
+# Only the two best performing are used in the final version, uncomment the rest to use them
+classifiers = ['NaiveBayes', 'SVM']  #, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
 outcome_descriptors = ["AKI3", "AKD1", "LCOS", "AF", "Any"]
 number_outcomes = 5
@@ -13,7 +14,7 @@ original_outcome_strings = []
 #   'BEFORE' for demographic data and data collected before surgery
 #   'DURING' for data about the surgery process
 #   'AFTER' for data collected after surgery
-feature_blocks_to_use = ['PRE_POST_BEFORE_DURING_AFTER']
+feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
 possible_feature_combinations = ['PRE',
                                  'POST',
                                  'PRE_POST',
@@ -21,7 +22,7 @@ possible_feature_combinations = ['PRE',
                                  'PRE_POST_BEFORE_DURING_AFTER']
 
 # Uniform colors for plots of used models
-classifier_colors = ['red', 'orange', 'green', 'purple', 'black', 'blue']
+classifier_colors = ['red', 'purple', 'orange', 'green', 'black', 'blue']
 
 # Adjust preprocessing of data for exploration and classification
 #   Standardization can be turned on and off with True and False
@@ -75,3 +76,6 @@ preprocess_parameters = {
     'Any,RandomForest': [False, 'median_std', 16, 1],
     'Any,XGBoost': [False, 'mean_std', 12, 0],
 }
+
+# Threshold for variance inflation based feature ablation, usually 5 (below vif is insignificant)
+vif_threshold = 5

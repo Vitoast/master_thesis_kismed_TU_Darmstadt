@@ -36,7 +36,7 @@ def main():
     # pe.find_best_imputation(complete_data_map, result_path)
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
     # pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
-    # pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
+    pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
     # Explore data and save results
     exploration_result_path = os.path.join(result_path, 'exploration_results')
@@ -82,11 +82,11 @@ def main():
     # fe.perform_feature_ablation_study_performance(complete_data_map, feature_evaluation_result_path)
 
     # Do the ablation study for each subset of interest of the data set
-    for data_set in gl.possible_feature_combinations:
-        current_result_path = os.path.join(feature_evaluation_result_path, data_set)
-        gl.feature_blocks_to_use = data_set
-        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
-        fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
+    # for data_set in gl.possible_feature_combinations:
+    #     current_result_path = os.path.join(feature_evaluation_result_path, data_set)
+    #     gl.feature_blocks_to_use = data_set
+    #     fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
+    #     fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
 
 
 if __name__ == "__main__":

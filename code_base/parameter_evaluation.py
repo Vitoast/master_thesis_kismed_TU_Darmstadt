@@ -196,10 +196,10 @@ def plot_bayesian_optimization_results(result_file_path, result_directory):
             # Extract the relevant parts
             outcome_descriptor = parts[0]
             model_descriptor = parts[1]
-            f1_score = float(parts[-2])  # Convert the last value to float
+            f1_score_result = float(parts[-2])  # Convert the last value to float
 
             f1_score_results[gl.outcome_descriptors.index(outcome_descriptor)][
-                gl.classifiers.index(model_descriptor)].append(f1_score)
+                gl.classifiers.index(model_descriptor)].append(f1_score_result)
 
     for outcome in range(len(gl.outcome_descriptors)):
         ax = plt.subplot(111)
@@ -207,7 +207,7 @@ def plot_bayesian_optimization_results(result_file_path, result_directory):
 
         # Plot a scatter plot of the data including a regression line
         for model in range(len(gl.classifiers)):
-            plt.scatter(x=model,
+            plt.scatter(x=list(range(len(f1_score_results[outcome][model]))),
                         y=f1_score_results[outcome][model],
                         color=gl.classifier_colors[model], label=gl.classifiers[model])
         box = ax.get_position()
@@ -234,7 +234,7 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
         # Optimize for each model
         for classification_descriptor in gl.classifiers:
             # FOR DEBUGGING, DELETE LATER -->
-            # if classification_descriptor == 'NaiveBayes': continue
+            if classification_descriptor == 'NaiveBayes': continue
             # if classification_descriptor == 'LogisticRegression': continue
             # if classification_descriptor == 'DecisionTree': continue
             # if classification_descriptor == 'SVM': continue
@@ -293,11 +293,10 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                     'C': [0.01, 0.1, 1, 10, 100],
                     'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
                     'degree': [2, 3, 4, 5],
-                    'gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1],
-                    # 'coef0': [0.0, 0.1, 0.5, 1.0],
-                    # 'shrinking': [True, False],
-                    # 'probability': [True, False],
-                    # 'tol': [1e-4, 1e-3, 1e-2, 1e-1],
+                    'coef0': [0.0, 0.1, 0.5, 1.0],
+                    'shrinking': [True, False],
+                    'probability': [True, False],
+                    'tol': [1e-4, 1e-3, 1e-2, 1e-1],
                     'class_weight': [None, 'balanced'],
                 }
                 classifier = SVC()
@@ -338,7 +337,7 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                 classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
 
             for outcome in range(0, gl.number_outcomes):
-                # Find matching configuration in precomputed data
+                # # Find matching configuration in precomputed data
                 current_configurations = next((value for key, value in gl.preprocess_parameters.items()
                                                if gl.outcome_descriptors[outcome] in key
                                                and classification_descriptor in key), None)
@@ -362,7 +361,7 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                 y_test = np.array(y_test).flatten()
 
                 # Define the scoring metric
-                f1_scorer = make_scorer(f1_score, average='binary')
+                f1_scorer = make_scorer(f1_score)
 
                 # Custom optimizer to ensure valid parameter combinations
                 # class CustomBayesSearchCV(BayesSearchCV):
@@ -380,19 +379,18 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                 opt = BayesSearchCV(
                     estimator=classifier,
                     search_spaces=param_space,
-                    # fit_params=fit_params,
                     cv=3,
-                    n_iter=50,
+                    n_iter=100,
                     random_state=42,
                     scoring=f1_scorer,
-                    verbose=1,
+                    verbose=3,
                 )
 
                 # Perform the optimization with the preprocessed data
                 opt.fit(x_train, y_train)
 
                 # Best parameters and best score
-                print("Best parameters found: ", opt.best_params_)
+                print(gl.outcome_descriptors[outcome] + " best parameters found: ", opt.best_params_)
                 # Evaluate the best model on the test set
                 best_model = opt.best_estimator_
                 test_score = best_model.score(x_test, y_test)
@@ -406,4 +404,4 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                                  f'{test_score},{test_f1_score},\n')
 
         # Plot results
-        plot_bayesian_optimization_results(stats_file_path, result_path)
+        plot_bayesian_optimization_results(stats_file_path, stats_directory_path)

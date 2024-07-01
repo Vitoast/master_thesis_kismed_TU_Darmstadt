@@ -157,7 +157,7 @@ def perform_feature_ablation_study_vif(original_data_map, result_directory):
             # Use Variance Inflation Factors for each feature and get highest as worst
             worst_feature = check_feature_variance_inflation(reference_map, result_path)
             # Stop calculation with vif of 1, here there is no point in continuing (outcome would be random)
-            if worst_feature['VIF'] <= 1.01:
+            if worst_feature['VIF'] <= gl.vif_threshold:
                 stop_iterations = True
                 break
             # Eliminate feature
