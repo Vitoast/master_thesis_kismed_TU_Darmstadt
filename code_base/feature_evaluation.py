@@ -122,7 +122,7 @@ def read_feature_ablation_csv_file_performance(filename):
 
 # Check the features of a data set by their vif and eliminate the highest in each iteration
 # Then train classifiers and evaluate their performance without the feature
-def perform_feature_ablation_study_vif(complete_data_map, result_directory):
+def perform_feature_ablation_study_vif(original_data_map, result_directory):
     removed_features = []
     os.makedirs(result_directory, exist_ok=True)
     result_file_name = "feature_ablation_study_vif"
@@ -133,6 +133,7 @@ def perform_feature_ablation_study_vif(complete_data_map, result_directory):
     # Prepare data structures that hold outcomes of study
     accuracies_per_outcome, f1_scores_per_outcome = pe.create_result_structure()
     # Reference map for computing vifs
+    complete_data_map = original_data_map.copy()
     reference_map = complete_data_map.copy()
     reference_map, rest = pre.preprocess_data(reference_map, reference_map.copy(), 0,
                                               gl.standardize, gl.impute, gl.max_test_threshold, gl.oversample)
