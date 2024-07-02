@@ -42,7 +42,7 @@ def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, rem
     # Plot a scatter plot of the data including a regression line
     for model in range(len(accuracies_per_model)):
         # ax.scatter(feature_counts, accuracies_per_model[model], label=classifiers[model]+'_accuracy')
-        if len(removed_features) > 50 :
+        if len(removed_features) > 50:
             sns.regplot(x=feature_counts, y=f1_scores_per_model[model], scatter_kws={"color": gl.classifier_colors[model]},
                         line_kws={"color": gl.classifier_colors[model]}, order=6, label=gl.classifiers[model])
         else:
@@ -82,7 +82,7 @@ def check_feature_variance_inflation(train_data_map, result_path):
 
 
 # Read in the result file of a vif ablation study
-# It has one line with the deleted feature and the f1-score of each iteration comma separated
+# It has one line with each deleted feature and its vif comma separated
 def read_feature_ablation_csv_file_vif(stats_file_path):
 
     marker_names = []
@@ -99,6 +99,29 @@ def read_feature_ablation_csv_file_vif(stats_file_path):
             f1_scores.append(current_scores)
 
     return marker_names, f1_scores
+
+
+# Read in the result file of a vif ablation study
+# It has one line with each deleted feature and its vif comma separated
+def read_feature_ablation_excel_file_per_outcome_vif(stats_file_path):
+
+    all_f1_scores, all_accuracies = [], []
+
+    # Read the Excel file
+    df = pd.read_excel(stats_file_path)
+
+    # Convert to a list if necessary
+    feature_names = df.columns[1:].tolist()
+
+    for classifier in gl.classifiers:
+        accuracy_row = df[df['Removed_Feature'] == f"{classifier}_accuracy"]
+        f1_score_row = df[df['Removed_Feature'] == f"{classifier}_f1_score"]
+
+        if not accuracy_row.empty and not f1_score_row.empty:
+            all_accuracies.append(accuracy_row.iloc[0, 1:].values)
+            all_f1_scores.append(f1_score_row.iloc[0, 1:].values)
+
+    return feature_names, all_f1_scores, all_accuracies
 
 
 # Read the results from a former performance feature ablation study
@@ -221,7 +244,7 @@ def continue_performance_ablation_after_vif(result_directory, result_file, compl
     if result_file == "":
         result_file = os.path.join(result_directory, "ablation_study_vifs.txt")
     # Read vif ablation results
-    deleted_features, f1_scores = read_feature_ablation_csv_file_vif(result_file)
+    deleted_features, vifs = read_feature_ablation_csv_file_vif(result_file)
     # Remove deleted features from set
     working_map = complete_data_map.copy()
     for feature_name in sum(deleted_features, []):
@@ -310,7 +333,7 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
                                       gl.outcome_descriptors[outcome])
 
 
-# Read the saved SCV file from an ablation study and plot the results
+# Read the saved SCV file from a performance ablation study and plot the results
 def plot_former_feature_ablation(result_directory):
     all_f1_scores, all_accuracies = pe.create_result_structure()
     os.makedirs(result_directory, exist_ok=True)
@@ -333,3 +356,33 @@ def plot_former_feature_ablation(result_directory):
 
         plot_feature_ablation_results(all_accuracies[outcome], all_f1_scores[outcome], markers,
                                       outcome_result_paths[outcome] + '_replot', gl.outcome_descriptors[outcome])
+
+
+def plot_one_model_vif_and_performance_feature_ablation(model_descriptor, result_directory):
+    all_f1_scores, all_accuracies = pe.create_result_structure()
+    model_idx = gl.classifiers.index(model_descriptor)
+    all_markers_in_order = []
+    plot_save_directory = os.path.join(result_directory, 'plots_of_combined_ablation')
+    os.makedirs(plot_save_directory, exist_ok=True)
+
+    for outcome in range(gl.number_outcomes):
+        vif_file_name = 'feature_ablation_study_vif_' + gl.outcome_descriptors[outcome] + '.xlsx'
+        vif_file_path = os.path.join(result_directory, vif_file_name)
+        markers, f1_scores, accuracies = read_feature_ablation_excel_file_per_outcome_vif(vif_file_path)
+        all_markers_in_order = markers
+        all_f1_scores[outcome] = f1_scores
+        all_accuracies[outcome] = accuracies
+
+        performance_file_name = gl.outcome_descriptors[outcome] + '_' + model_descriptor + '_ablation_study_performance.txt'
+        performance_file_path = os.path.join(result_directory, performance_file_name)
+        markers, f1_scores, accuracies = read_feature_ablation_csv_file_performance(performance_file_path)
+        if "" in markers: markers.pop(len(markers) - 1)
+        all_markers_in_order = all_markers_in_order + markers
+        for i in range(len(all_f1_scores[outcome])):
+            x = all_f1_scores[outcome][i]
+            y = np.array(f1_scores)
+            # z = p.concatenate(all_f1_scores[outcome][i], np.array(f1_scores),)
+            all_f1_scores[outcome][i] = np.concatenate((all_f1_scores[outcome][i], np.array(f1_scores)))
+            all_accuracies[outcome][i] = np.concatenate((all_accuracies[outcome][i], np.array(accuracies)))
+
+        plot_feature_ablation_results(all_accuracies[outcome], all_f1_scores[outcome], all_markers_in_order, plot_save_directory, gl.outcome_descriptors[outcome])
