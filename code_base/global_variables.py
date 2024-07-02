@@ -77,5 +77,24 @@ preprocess_parameters = {
     'Any,XGBoost': [False, 'mean_std', 12, 0],
 }
 
+# These parameters are to set up the prediction models in the best way corresponding to the outcomes (precomputed)
+model_parameters = {
+    'AKI3,NaiveBayes': {'var_smoothing': 1.0},
+    'AKD1,NaiveBayes': {'var_smoothing': 1.0},
+    'LCOS,NaiveBayes': {'var_smoothing': 1.0},
+    'AF,NaiveBayes': {'var_smoothing': 0.0001},
+    'Any,NaiveBayes': {'var_smoothing': 1.0},
+    'AKI3,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.5, 'degree': 2, 'kernel': 'rbf',
+                 'probability': False, 'shrinking': False, 'tol': 0.1},
+    'AKD1,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.0, 'degree': 3, 'kernel': 'sigmoid',
+                 'probability': False, 'shrinking': True, 'tol': 0.0001},
+    'LCOS,SVM': {'C': 1, 'class_weight': 'balanced', 'coef0': 0.1, 'degree': 5, 'kernel': 'sigmoid',
+                 'probability': False, 'shrinking': False, 'tol': 0.0001},
+    'AF,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.5, 'degree': 4, 'kernel': 'rbf',
+               'probability': False, 'shrinking': True, 'tol': 0.0001},
+    'Any,SVM': {'C': 0.01, 'class_weight': 'balanced', 'coef0': 0.5, 'degree': 3, 'kernel': 'rbf',
+                'probability': True, 'shrinking': True, 'tol': 0.0001},
+}
+
 # Threshold for variance inflation based feature ablation, usually 5 (below vif is insignificant)
 vif_threshold = 5

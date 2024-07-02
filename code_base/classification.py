@@ -129,15 +129,21 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
 def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_target_index,
                       result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
     accuracy_results, f1_scores = [], []
+    # Get model parameters for this case
+    parameter_dictionary = next((value for key, value in gl.model_parameters.items() if classification_descriptor in key
+                                 and gl.outcome_descriptors[outcome_target_index] in key), None)
     # Fit model, predict and evaluate accuracy for the desired outcome
     # Choose desired classifier based on configuration
-    classifier = GaussianNB()
-    if classification_descriptor == 'LogisticRegression':
+    if classification_descriptor == 'NaiveBayes':
+        classifier = GaussianNB()
+        classifier.set_params(**parameter_dictionary)
+    elif classification_descriptor == 'LogisticRegression':
         classifier = LogisticRegression()
     elif classification_descriptor == 'DecisionTree':
         classifier = DecisionTreeClassifier()
     elif classification_descriptor == 'SVM':
         classifier = SVC()
+        classifier.set_params(**parameter_dictionary)
     elif classification_descriptor == 'RandomForest':
         classifier = RandomForestClassifier()
     elif classification_descriptor == 'XGBoost':
