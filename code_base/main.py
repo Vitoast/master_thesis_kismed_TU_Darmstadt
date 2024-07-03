@@ -49,7 +49,7 @@ def main():
     #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
     # Plot an UMAP result of the data set
     umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
-    # exp.plot_umap(complete_data_map, umap_exploration_result_path)
+    exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
     # Compute correlation metrics of data set
     # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
@@ -99,9 +99,9 @@ def main():
     #     fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
 
     # Plot the mixed feature ablation study for the above considered subsets
-    for test_set in gl.possible_feature_combinations:
-        test_files = os.path.join(feature_evaluation_result_path, test_set)
-        fe.plot_one_model_vif_and_performance_feature_ablation(test_files)
+    # for test_set in gl.possible_feature_combinations:
+    #     test_files = os.path.join(feature_evaluation_result_path, test_set)
+    #     fe.plot_one_model_vif_and_performance_feature_ablation(test_files)
 
 
 if __name__ == "__main__":

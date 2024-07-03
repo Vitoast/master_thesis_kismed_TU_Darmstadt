@@ -135,7 +135,7 @@ def plot_umap(data_dictionary, output_directory):
                                                          (len(x_data_per_outcome[outcome][0]),
                                                           len(x_data_per_outcome[outcome]))),
                                               y_data_per_outcome[outcome][0])
-        fig, ax = plt.subplots(1, figsize=(14, 10))
+        fig, ax = plt.subplots(1, figsize=(8, 6))
         plt.scatter(*embedding.T, s=20, c=y_data_per_outcome[outcome], cmap='viridis', alpha=1.0)
         plt.setp(ax, xticks=[], yticks=[])
         cbar = plt.colorbar(boundaries=np.arange(3) - 0.5)
@@ -165,7 +165,7 @@ def plot_umap(data_dictionary, output_directory):
                                                               len(x_data_per_outcome[outcome_a]))),
                                                   y_tmp)
             # Plot
-            fig, ax = plt.subplots(1, figsize=(14, 10))
+            fig, ax = plt.subplots(1, figsize=(8, 6))
             plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='viridis', alpha=1.0)
             plt.setp(ax, xticks=[], yticks=[])
             cbar = plt.colorbar(boundaries=np.arange(5) - 0.5)
@@ -180,3 +180,47 @@ def plot_umap(data_dictionary, output_directory):
             plt.tight_layout()
             plt.savefig(result_path)
             plt.close()
+
+    # Plot UMAP for all outcomes
+    result_path = os.path.join(output_directory, f'umap_of_all_outcomes')
+
+    # Scalar values for each outcome to distinguish overlapping classes
+    scalars = np.array([0, 1, 4, 8])
+    # Sum the scaled outcomes
+    y_tmp = np.sum(scalar * array for scalar, array in zip(scalars, np.array(y_data_per_outcome)))
+    # y_tmp = y_data_per_outcome[0] + (y_data_per_outcome[1] * 2) + (y_data_per_outcome[2] * 4) + (y_data_per_outcome[3] * 8)
+    # Calculate and plot umap
+    embedding = umap.UMAP().fit_transform(np.reshape(x_data_per_outcome[0],
+                                                     (len(x_data_per_outcome[0][0]),
+                                                      len(x_data_per_outcome[0]))),
+                                          y_tmp[0])
+    # Plot
+    fig, ax = plt.subplots(1, figsize=(8, 6))
+    plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='nipy_spectral', alpha=1.0)
+    plt.setp(ax, xticks=[], yticks=[])
+    cbar = plt.colorbar(boundaries=np.arange(14) - 0.5)
+    cbar.set_ticks(np.arange(13))
+    classes = ['No adverse event',
+               'Only ' + gl.outcome_descriptors[0],
+               'Only ' + gl.outcome_descriptors[1],
+               gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[1],
+               'Only ' + gl.outcome_descriptors[2],
+               gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[2],
+               gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
+               gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
+               'Only ' + gl.outcome_descriptors[3],
+               gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[3],
+               gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
+               gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
+               gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
+               gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3]]
+               # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
+               # gl.outcome_descriptors[1] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
+               # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ', '
+               # + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3]]
+    cbar.set_ticklabels(classes)
+    plt.title('UMAP visualization of all outcomes and their combinations')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(result_path)
+    plt.close()
