@@ -381,13 +381,13 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory):
             all_markers_in_order = markers
             all_f1_scores[outcome] = f1_scores
             all_accuracies[outcome] = accuracies
-            vif_border = len(markers)
 
             performance_file_name = gl.outcome_descriptors[outcome] + '_' + model + '_ablation_study_performance.txt'
             performance_file_path = os.path.join(result_directory, performance_file_name)
 
             # Second get the results of the following performance ablation study
             markers, f1_scores, accuracies = read_feature_ablation_csv_file_performance(performance_file_path)
+            vif_border = len(markers)
             # Delete "" point at the end
             if "" in markers: markers.pop(len(markers) - 1)
             all_markers_in_order = all_markers_in_order + markers

@@ -1,6 +1,6 @@
 # String descriptors of used classifiers
 # Only the two best performing are used in the final version, uncomment the rest to use them
-classifiers = ['NaiveBayes', 'SVM', 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
+classifiers = ['NaiveBayes', 'SVM']#, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
 outcome_descriptors = ["AKI3", "AKD1", "LCOS", "AF", "Any"]
 number_outcomes = 5
