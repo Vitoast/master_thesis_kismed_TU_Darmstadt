@@ -1,22 +1,21 @@
-import classification as clf
-import seaborn as sns
+import numpy as np
+import os
 import matplotlib.pyplot as plt
 from skopt.utils import use_named_args
 from skopt import gp_minimize
 from skopt import BayesSearchCV
-from skopt.space import Real, Integer, Categorical
+from skopt.space import Integer, Categorical
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import make_scorer, f1_score, roc_curve, auc
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
-import numpy as np
-import os
-import preprocess_data as pre
+
 import global_variables as gl
+import preprocess_data as pre
+import classification as clf
 
 
 # Initialize data structure to save results

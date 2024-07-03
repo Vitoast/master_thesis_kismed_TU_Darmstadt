@@ -1,3 +1,6 @@
+import pandas as pd
+import os
+import numpy as np
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
@@ -9,11 +12,9 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 import xgboost as xgb
-import pandas as pd
-import os
-import numpy as np
-import preprocess_data as pre
+
 import global_variables as gl
+import preprocess_data as pre
 
 # Name for Excel file with results
 result_file_name = "classification_results.xlsx"

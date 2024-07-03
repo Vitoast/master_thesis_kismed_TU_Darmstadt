@@ -1,11 +1,12 @@
 import os
 import pandas as pd
 from scipy import stats
-import explorational_data_analysis as exp
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 import global_variables as gl
+import explorational_data_analysis as exp
 
 
 # Compute point biserial correlation for each clinical marker

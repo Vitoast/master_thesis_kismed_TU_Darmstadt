@@ -1,6 +1,6 @@
 # String descriptors of used classifiers
 # Only the two best performing are used in the final version, uncomment the rest to use them
-classifiers = ['NaiveBayes', 'SVM']  #, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
+classifiers = ['NaiveBayes', 'SVM', 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
 outcome_descriptors = ["AKI3", "AKD1", "LCOS", "AF", "Any"]
 number_outcomes = 5
@@ -41,9 +41,9 @@ max_test_threshold = 16
 min_test_threshold = 4
 filter_outliers_parameters = range(min_test_threshold, max_test_threshold)
 oversampling_parameters = [1, 0]
-# When facing problems with oversampling see that threadpoolctl is properly installed
+# HINT: When facing problems with oversampling see that package threadpoolctl is properly installed
 
-# These parameter combinations for preprocessing where computed to be the best for each outcome and model combination
+# Parameter combinations for preprocessing to be the best for each outcome and model combination (precomputed)
 preprocess_parameters = {
     'AKI3,NaiveBayes': [False, 'mean_std', 6, 0],
     'AKI3,LogisticRegression': [True, 'mean_std', 10, 1],

@@ -1,3 +1,6 @@
+import os
+
+import global_variables as gl
 import read_excel
 import explorational_data_analysis as exp
 import correlation_analysis as cor
@@ -5,8 +8,6 @@ import preprocess_data as pre
 import classification as clf
 import feature_evaluation as fe
 import parameter_evaluation as pe
-import os
-import global_variables as gl
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
     complete_source_path = os.path.join(source_dir_path, complete_excel_file)
     result_path = os.path.join(source_dir_path, "results")
 
-    # Read data from Excel file
+    # Read data from Excel file, save it in predefined split sets and the complete set
     train_data_map = read_excel.read_excel_data(train_source_path)
     test_data_map = read_excel.read_excel_data(test_source_path)
     complete_data_map = read_excel.read_excel_data(complete_source_path)
@@ -29,26 +30,28 @@ def main():
     for feature_name, feature_data in list(complete_data_map.items())[1:6]:
         gl.original_outcome_strings.append(feature_name)
 
-    # Tune parameters
-    # 1. Find best z-score outlier filter value
+    # Tune parameters to find near optimal configurations for each classifier-model combination
     parameter_evaluation_result_path = os.path.join(result_path, "parameter_evaluation_results")
+    # 1. Find the good metrics for the whole set based on predefined search spaces (primitive)
     # pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
     # pe.find_best_imputation(complete_data_map, result_path)
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
+    # 2. Use Bayesian Optimization to find good parameters for preprocessing and model configuration (elaborate)
     # pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
     # pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
-    # Explore data and save results
+    # Explore data set, plot data distribution and get statistical metrics
     exploration_result_path = os.path.join(result_path, 'exploration_results')
     # exp.check_data_sets(train_data_map, test_data_map)
     # if standardize or impute:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
     # else:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
+    # Plot an UMAP result of the data set
     umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
     # exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
-    # Compute correlation metrics
+    # Compute correlation metrics of data set
     # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
@@ -59,6 +62,7 @@ def main():
     # Turn this on to retrieve model configuration
     print_model_details = False
 
+    # Option 1: Use predefined training and test sets
     # if gl.validation_method == 'hold_out':
     #     for outcome in range(gl.number_outcomes):
     #         for model in gl.classifiers:
@@ -66,6 +70,7 @@ def main():
     #             print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
     #                                parameter_descriptor, model, print_model_details, True))
 
+    # Option 2: Use cross validation on complete set
     # if gl.validation_method == 'k_fold':
     #     for outcome in range(gl.number_outcomes):
     #         for model in gl.classifiers:
@@ -75,13 +80,16 @@ def main():
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
-    # fe.read_csv_results(feature_evaluation_result_path, complete_data_map)
-    # fe.plot_former_feature_ablation(feature_evaluation_result_path)
+    # There are three options:
+    #   1. Based on the variance inflation factor
     # fe.perform_feature_ablation_study_vif(complete_data_map, feature_evaluation_result_path)
+    #   2. After VIF is insignificant continue with the highest performance gain
     # fe.continue_performance_ablation_after_vif(feature_evaluation_result_path, "", complete_data_map)
+    #   3. Consider only the performance gain
     # fe.perform_feature_ablation_study_performance(complete_data_map, feature_evaluation_result_path)
-    test_files = os.path.join(feature_evaluation_result_path, "PRE_POST_BEFORE")
-    fe.plot_one_model_vif_and_performance_feature_ablation('SVM', test_files)
+
+    # Replot before computed feature ablation study
+    # fe.plot_former_feature_ablation(feature_evaluation_result_path)
 
     # Do the ablation study for each subset of interest of the data set
     # for data_set in gl.possible_feature_combinations:
@@ -89,6 +97,11 @@ def main():
     #     gl.feature_blocks_to_use = data_set
     #     fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
     #     fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
+
+    # Plot the mixed feature ablation study for the above considered subsets
+    for test_set in gl.possible_feature_combinations:
+        test_files = os.path.join(feature_evaluation_result_path, test_set)
+        fe.plot_one_model_vif_and_performance_feature_ablation(test_files)
 
 
 if __name__ == "__main__":

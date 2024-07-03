@@ -6,6 +6,7 @@ import seaborn as sns
 import pandas as pd
 from collections import Counter
 import umap
+
 import global_variables as gl
 import preprocess_data as pre
 import classification as cl
