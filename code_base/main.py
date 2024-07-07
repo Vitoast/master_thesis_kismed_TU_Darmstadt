@@ -38,7 +38,7 @@ def main():
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
     # 2. Use Bayesian Optimization to find good parameters for preprocessing and model configuration (elaborate)
     # pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
-    # pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
+    pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
     # Explore data set, plot data distribution and get statistical metrics
     exploration_result_path = os.path.join(result_path, 'exploration_results')
@@ -74,6 +74,7 @@ def main():
     # if gl.validation_method == 'k_fold':
     #     for outcome in range(gl.number_outcomes):
     #         for model in gl.classifiers:
+    #             gl.feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
     #             print(gl.outcome_descriptors[outcome], model)
     #             print(clf.classify_k_fold(complete_data_map.copy(), outcome, classification_result_path,
     #                                 parameter_descriptor, model, print_model_details, True))
@@ -99,9 +100,9 @@ def main():
     #     fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
 
     # Plot the mixed feature ablation study for the above considered subsets
-    for test_set in gl.possible_feature_combinations:
-        test_files = os.path.join(feature_evaluation_result_path, test_set)
-        fe.plot_one_model_vif_and_performance_feature_ablation(test_files)
+    # for test_set in gl.possible_feature_combinations:
+    #     test_files = os.path.join(feature_evaluation_result_path, test_set)
+    #     fe.plot_one_model_vif_and_performance_feature_ablation(test_files)
 
 
 if __name__ == "__main__":

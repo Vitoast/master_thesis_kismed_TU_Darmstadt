@@ -172,7 +172,7 @@ def bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map,
             for model in gl.classifiers:
                 current_model = model
                 # Minimize objective function
-                result = gp_minimize(objective, dimensions=param_space, n_calls=100, random_state=42)
+                result = gp_minimize(objective, dimensions=param_space, n_calls=200, random_state=42)
                 best_parameters = result.x
                 best_score = - result.fun
                 stats_file.write(f'{gl.outcome_descriptors[outcome]},{model},{best_parameters},{best_score},\n')

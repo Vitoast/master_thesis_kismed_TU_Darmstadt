@@ -112,7 +112,10 @@ def check_data_sets(train_map, test_map):
 # Visualize clustering of the data with umap
 def plot_umap(data_dictionary, output_directory):
     x_data_per_outcome, y_data_per_outcome = [], []
-    os.makedirs(output_directory, exist_ok=True)
+
+    # Set of reasonable UMAP hyperparameters
+    n_neighbors_range = [5, 10, 20, 50]
+    min_dist_range = [0.001, 0.01, 0.1, 0.5]
 
     # Preprocess data per outcome separately
     for outcome in range(gl.number_outcomes):
@@ -120,107 +123,112 @@ def plot_umap(data_dictionary, output_directory):
                                                                               data_dictionary.copy(),
                                                                               outcome,
                                                                               standardize=gl.standardize,
-                                                                              impute='median_std',
+                                                                              impute='median_group',
                                                                               z_score_threshold=0,
                                                                               oversample_rate=0)
         x_train, x_test, y_train, y_test = cl.split_maps(preprocessed_train_data, [])
         x_data_per_outcome.append(x_train)
         y_data_per_outcome.append(y_train)
 
-    # Plot umap for each outcome separately
-    for outcome in range(gl.number_outcomes):
-        result_path = os.path.join(output_directory, f'umap_of_only_{gl.outcome_descriptors[outcome]}')
+    # Try out every combination of the hyperparameters
+    for n_neighbors in n_neighbors_range:
+        for min_dist in min_dist_range:
 
-        embedding = umap.UMAP().fit_transform(np.reshape(x_data_per_outcome[outcome],
-                                                         (len(x_data_per_outcome[outcome][0]),
-                                                          len(x_data_per_outcome[outcome]))),
-                                              y_data_per_outcome[outcome][0])
-        fig, ax = plt.subplots(1, figsize=(8, 6))
-        plt.scatter(*embedding.T, s=20, c=y_data_per_outcome[outcome], cmap='viridis', alpha=1.0)
-        plt.setp(ax, xticks=[], yticks=[])
-        cbar = plt.colorbar(boundaries=np.arange(3) - 0.5)
-        cbar.set_ticks(np.arange(2))
-        classes = ['Not ' + gl.outcome_descriptors[outcome], gl.outcome_descriptors[outcome]]
-        cbar.set_ticklabels(classes)
-        plt.title(gl.outcome_descriptors[outcome] + ' UMAP visualization')
-        plt.tight_layout()
-        plt.savefig(result_path)
-        plt.close()
+            current_output_directory = os.path.join(output_directory, 'Test_' + str(n_neighbors_range.index(n_neighbors))
+                                                    + '_' + str(min_dist_range.index(min_dist)))
+            os.makedirs(current_output_directory, exist_ok=True)
 
-    # Plot umap of each combination of outcomes
-    for outcome_a in range(gl.number_outcomes - 1):
-        for outcome_b in range(gl.number_outcomes - 1):
-            # Skip doubled calculations
-            if outcome_b <= outcome_a:
-                continue
+            # Plot umap for each outcome separately
+            for outcome in range(gl.number_outcomes):
+                result_path = os.path.join(current_output_directory, f'umap_of_only_{gl.outcome_descriptors[outcome]}')
 
-            result_path = os.path.join(output_directory,
-                                       f'umap_of_{gl.outcome_descriptors[outcome_a]}_with_{gl.outcome_descriptors[outcome_b]}')
+                reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist)
+                embedding = reducer.fit_transform(np.reshape(x_data_per_outcome[outcome],
+                                                             (len(x_data_per_outcome[outcome][0]),
+                                                              len(x_data_per_outcome[outcome]))))
+                fig, ax = plt.subplots(1, figsize=(8, 6))
+                plt.scatter(*embedding.T, s=20, c=y_data_per_outcome[outcome], cmap='viridis', alpha=1.0)
+                plt.setp(ax, xticks=[], yticks=[])
+                cbar = plt.colorbar(boundaries=np.arange(3) - 0.5)
+                cbar.set_ticks(np.arange(2))
+                classes = ['Not ' + gl.outcome_descriptors[outcome], gl.outcome_descriptors[outcome]]
+                cbar.set_ticklabels(classes)
+                plt.title(gl.outcome_descriptors[outcome] + ' UMAP visualization')
+                plt.tight_layout()
+                plt.savefig(result_path)
+                plt.close()
 
-            # Calculate independent and overlapping classes
-            y_tmp = np.sum(y_data_per_outcome[outcome_a] + 2 * y_data_per_outcome[outcome_b], axis=0)
+            # Plot umap of each combination of outcomes
+            for outcome_a in range(gl.number_outcomes - 1):
+                for outcome_b in range(gl.number_outcomes - 1):
+                    # Skip doubled calculations
+                    if outcome_b <= outcome_a:
+                        continue
+
+                    result_path = os.path.join(current_output_directory,
+                                               f'umap_of_{gl.outcome_descriptors[outcome_a]}_with_{gl.outcome_descriptors[outcome_b]}')
+
+                    # Calculate independent and overlapping classes
+                    y_tmp = np.sum(y_data_per_outcome[outcome_a] + 2 * y_data_per_outcome[outcome_b], axis=0)
+                    # Calculate and plot umap
+                    reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist)
+                    embedding = reducer.fit_transform(np.reshape(x_data_per_outcome[outcome_a],
+                                                                 (len(x_data_per_outcome[outcome_a][0]),
+                                                                  len(x_data_per_outcome[outcome_a]))))
+                    # Plot
+                    fig, ax = plt.subplots(1, figsize=(8, 6))
+                    plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='viridis', alpha=1.0)
+                    plt.setp(ax, xticks=[], yticks=[])
+                    cbar = plt.colorbar(boundaries=np.arange(5) - 0.5)
+                    cbar.set_ticks(np.arange(4))
+                    classes = ['No adverse event', 'Only ' + gl.outcome_descriptors[outcome_a],
+                               'Only ' + gl.outcome_descriptors[outcome_b],
+                               gl.outcome_descriptors[outcome_a] + ' and ' + gl.outcome_descriptors[outcome_b]]
+                    cbar.set_ticklabels(classes)
+                    plt.title(gl.outcome_descriptors[outcome_a] + ' and ' + gl.outcome_descriptors[outcome_b]
+                              + ' UMAP visualization')
+                    plt.tight_layout()
+                    plt.savefig(result_path)
+                    plt.close()
+
+            # Plot UMAP for all outcomes
+            result_path = os.path.join(current_output_directory, f'umap_of_all_outcomes')
+
+            # Scalar values for each outcome to distinguish overlapping classes
+            scalars = np.array([0, 1, 4, 8])
+            # Sum the scaled outcomes to distinguish between combinations of outcomes
+            y_tmp = np.sum(scalar * array for scalar, array in zip(scalars, np.array(y_data_per_outcome)))
             # Calculate and plot umap
-            embedding = umap.UMAP().fit_transform(np.reshape(x_data_per_outcome[outcome_a],
-                                                             (len(x_data_per_outcome[outcome_a][0]),
-                                                              len(x_data_per_outcome[outcome_a]))),
-                                                  y_tmp)
+            reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist)
+            embedding = reducer.fit_transform(np.reshape(x_data_per_outcome[0],
+                                                         (len(x_data_per_outcome[0][0]),
+                                                          len(x_data_per_outcome[0]))))
             # Plot
             fig, ax = plt.subplots(1, figsize=(8, 6))
-            plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='viridis', alpha=1.0)
+            plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='nipy_spectral', alpha=1.0)
             plt.setp(ax, xticks=[], yticks=[])
-            cbar = plt.colorbar(boundaries=np.arange(5) - 0.5)
-            cbar.set_ticks(np.arange(4))
-            classes = ['No adverse event', 'Only ' + gl.outcome_descriptors[outcome_a],
-                       'Only ' + gl.outcome_descriptors[outcome_b],
-                       gl.outcome_descriptors[outcome_a] + ' and ' + gl.outcome_descriptors[outcome_b]]
+            cbar = plt.colorbar(boundaries=np.arange(14) - 0.5)
+            cbar.set_ticks(np.arange(13))
+            classes = ['No adverse event',
+                       'Only ' + gl.outcome_descriptors[0],
+                       'Only ' + gl.outcome_descriptors[1],
+                       gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[1],
+                       'Only ' + gl.outcome_descriptors[2],
+                       gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[2],
+                       gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
+                       gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
+                       'Only ' + gl.outcome_descriptors[3],
+                       gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[3],
+                       gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
+                       gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
+                       gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
+                       gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3]]
+            # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
+            # gl.outcome_descriptors[1] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
+            # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ', '
+            # + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3]]
             cbar.set_ticklabels(classes)
-            plt.title(gl.outcome_descriptors[outcome_a] + ' and ' + gl.outcome_descriptors[outcome_b]
-                      + ' UMAP visualization')
-            plt.legend()
+            plt.title('UMAP visualization of all outcomes and their combinations')
             plt.tight_layout()
             plt.savefig(result_path)
             plt.close()
-
-    # Plot UMAP for all outcomes
-    result_path = os.path.join(output_directory, f'umap_of_all_outcomes')
-
-    # Scalar values for each outcome to distinguish overlapping classes
-    scalars = np.array([0, 1, 4, 8])
-    # Sum the scaled outcomes
-    y_tmp = np.sum(scalar * array for scalar, array in zip(scalars, np.array(y_data_per_outcome)))
-    # y_tmp = y_data_per_outcome[0] + (y_data_per_outcome[1] * 2) + (y_data_per_outcome[2] * 4) + (y_data_per_outcome[3] * 8)
-    # Calculate and plot umap
-    embedding = umap.UMAP().fit_transform(np.reshape(x_data_per_outcome[0],
-                                                     (len(x_data_per_outcome[0][0]),
-                                                      len(x_data_per_outcome[0]))),
-                                          y_tmp[0])
-    # Plot
-    fig, ax = plt.subplots(1, figsize=(8, 6))
-    plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='nipy_spectral', alpha=1.0)
-    plt.setp(ax, xticks=[], yticks=[])
-    cbar = plt.colorbar(boundaries=np.arange(14) - 0.5)
-    cbar.set_ticks(np.arange(13))
-    classes = ['No adverse event',
-               'Only ' + gl.outcome_descriptors[0],
-               'Only ' + gl.outcome_descriptors[1],
-               gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[1],
-               'Only ' + gl.outcome_descriptors[2],
-               gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[2],
-               gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
-               gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
-               'Only ' + gl.outcome_descriptors[3],
-               gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[3],
-               gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
-               gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
-               gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
-               gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3]]
-               # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
-               # gl.outcome_descriptors[1] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
-               # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ', '
-               # + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3]]
-    cbar.set_ticklabels(classes)
-    plt.title('UMAP visualization of all outcomes and their combinations')
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(result_path)
-    plt.close()

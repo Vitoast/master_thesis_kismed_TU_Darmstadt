@@ -12,6 +12,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 import xgboost as xgb
+from collections import Counter
 
 import global_variables as gl
 import preprocess_data as pre
@@ -101,10 +102,14 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
     # Preprocess data accordingly
     tmp_train_data_map, tmp_test_data_map = pre.preprocess_data(train_data_map.copy(), test_data_map.copy(),
                                                                 outcome_target_index,
-                                                                standardize=current_standardize,
-                                                                impute=current_impute,
-                                                                z_score_threshold=current_z_score_threshold,
-                                                                oversample_rate=current_oversample_rate)
+                                                                standardize=gl.standardize,
+                                                                impute=gl.impute,
+                                                                z_score_threshold=gl.filter_outliers_z_score,
+                                                                oversample_rate=gl.oversample)
+                                                                # standardize=current_standardize,
+                                                                # impute=current_impute,
+                                                                # z_score_threshold=current_z_score_threshold,
+                                                                # oversample_rate=current_oversample_rate)
 
     x_train, x_test, y_train, y_test = split_maps(tmp_train_data_map, tmp_test_data_map)
     y_train = np.array(y_train).flatten()
@@ -163,6 +168,15 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
     # Fit model and predict on test set
     classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
     y_pred = classifier.predict(np.reshape(x_test, (len(x_test[0]), len(x_test))))
+
+    # Count the occurrences of each element in the list
+    counter = Counter(y_pred)
+
+    # Give back score of 0 if classifier only predicts one class (means it is not learning)
+    for element, count in counter.items():
+        if count == len(y_pred):
+            return [0], [0]
+
     # Compute prediction accuracy
     accuracy_results.append(accuracy_score(y_test, y_pred))
     # Compute error measures
