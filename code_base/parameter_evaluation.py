@@ -336,7 +336,12 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                 classifier = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
 
             for outcome in range(0, gl.number_outcomes):
-                # # Find matching configuration in precomputed data
+
+                # DEBUGGING !!!!
+                if outcome != gl.outcome_descriptors.index('AKD1'):
+                    continue
+
+                # Find matching configuration in precomputed data
                 current_configurations = next((value for key, value in gl.preprocess_parameters.items()
                                                if gl.outcome_descriptors[outcome] in key
                                                and classification_descriptor in key), None)
@@ -382,7 +387,7 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
                     n_iter=100,
                     random_state=42,
                     scoring=f1_scorer,
-                    verbose=3,
+                    verbose=1,
                 )
 
                 # Perform the optimization with the preprocessed data

@@ -363,7 +363,7 @@ def plot_former_feature_ablation(result_directory):
 
 
 # In case of combined feature ablation of VIF and performance use this to plot the results of each model
-def plot_one_model_vif_and_performance_feature_ablation(result_directory):
+def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_performance=False):
     all_f1_scores, all_accuracies = pe.create_result_structure()
     plot_save_directory = os.path.join(result_directory, 'plots_of_combined_ablation')
     os.makedirs(plot_save_directory, exist_ok=True)
@@ -373,14 +373,20 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory):
         # Get results for each outcome from saved files
         for outcome in range(gl.number_outcomes):
 
-            vif_file_name = 'feature_ablation_study_vif_' + gl.outcome_descriptors[outcome] + '.xlsx'
-            vif_file_path = os.path.join(result_directory, vif_file_name)
+            all_markers_in_order, all_f1_scores[outcome], all_accuracies[outcome] = [], [], []
+            for feature_string in gl.classifiers:
+                all_f1_scores[outcome].append([])
+                all_accuracies[outcome].append([])
 
-            # First get the results of the VIF ablation study
-            markers, f1_scores, accuracies = read_feature_ablation_excel_file_per_outcome_vif(vif_file_path)
-            all_markers_in_order = markers
-            all_f1_scores[outcome] = f1_scores
-            all_accuracies[outcome] = accuracies
+            if not only_performance:
+                vif_file_name = 'feature_ablation_study_vif_' + gl.outcome_descriptors[outcome] + '.xlsx'
+                vif_file_path = os.path.join(result_directory, vif_file_name)
+
+                # First get the results of the VIF ablation study
+                markers, f1_scores, accuracies = read_feature_ablation_excel_file_per_outcome_vif(vif_file_path)
+                all_markers_in_order = markers
+                all_f1_scores[outcome] = f1_scores
+                all_accuracies[outcome] = accuracies
 
             performance_file_name = gl.outcome_descriptors[outcome] + '_' + model + '_ablation_study_performance.txt'
             performance_file_path = os.path.join(result_directory, performance_file_name)
@@ -393,8 +399,13 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory):
             all_markers_in_order = all_markers_in_order + markers
             # Add results to each model
             for i in range(len(all_f1_scores[outcome])):
-                all_f1_scores[outcome][i] = list(np.concatenate((all_f1_scores[outcome][i], np.array(f1_scores))))
-                all_accuracies[outcome][i] = list(np.concatenate((all_accuracies[outcome][i], np.array(accuracies))))
+                if not only_performance:
+                    all_f1_scores[outcome][i] = list(np.concatenate((all_f1_scores[outcome][i], np.array(f1_scores))))
+                    all_accuracies[outcome][i] = list(np.concatenate((all_accuracies[outcome][i], np.array(accuracies))))
+                else:
+                    all_f1_scores[outcome][i] = f1_scores
+                    all_accuracies[outcome][i] = list(
+                        np.concatenate((all_accuracies[outcome][i], np.array(accuracies))))
 
         plot_save_name = os.path.join(plot_save_directory, 'combined_ablation_plot_' + model + '.png')
 
@@ -410,11 +421,14 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory):
                         label=gl.outcome_descriptors[outcome])
         box = ax.get_position()
         # Add vertical line to represent transition between VIF and performance
-        plt.axvline(x=vif_border, color='red', linestyle='--', linewidth=2,
-                    label='Threshold between VIF\nand performance ablation')
+        if not only_performance:
+            plt.axvline(x=vif_border, color='red', linestyle='--', linewidth=2,
+                        label='Threshold between VIF\nand performance ablation')
+            plt.title('Combined VIF and performance feature ablation study plot for ' + model)
+        else:
+            plt.title('Performance feature ablation study plot for ' + model)
         ax.set_position([box.x0, box.y0, box.width * 1, box.height])
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.title('Combined VIF and performance feature ablation study plot for ' + model)
         plt.xlabel('Number of features left')
         plt.ylabel('F1 score')
         plt.grid(True)

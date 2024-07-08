@@ -74,7 +74,6 @@ def main():
     # if gl.validation_method == 'k_fold':
     #     for outcome in range(gl.number_outcomes):
     #         for model in gl.classifiers:
-    #             gl.feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
     #             print(gl.outcome_descriptors[outcome], model)
     #             print(clf.classify_k_fold(complete_data_map.copy(), outcome, classification_result_path,
     #                                 parameter_descriptor, model, print_model_details, True))
@@ -96,8 +95,13 @@ def main():
     for data_set in gl.possible_feature_combinations:
         current_result_path = os.path.join(feature_evaluation_result_path, data_set)
         gl.feature_blocks_to_use = data_set
-        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
-        fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
+        # Option 1: Do combined VIF and performance
+        # fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
+        # fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
+        # Option 2: Do only performance
+        fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
+        # Use this to plot former ablation studies
+        fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
 
     # Plot the mixed feature ablation study for the above considered subsets
     # for test_set in gl.possible_feature_combinations:
