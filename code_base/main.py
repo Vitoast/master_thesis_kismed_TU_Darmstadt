@@ -38,12 +38,12 @@ def main():
     # pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
     # 2. Use Bayesian Optimization to find good parameters for preprocessing and model configuration (elaborate)
     # pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
-    pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
+    # pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
     # Explore data set, plot data distribution and get statistical metrics
     exploration_result_path = os.path.join(result_path, 'exploration_results')
     # exp.check_data_sets(train_data_map, test_data_map)
-    # if standardize or impute:
+    # if gl.standardize or gl.impute:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
     # else:
     #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
@@ -93,11 +93,11 @@ def main():
     # fe.plot_former_feature_ablation(feature_evaluation_result_path)
 
     # Do the ablation study for each subset of interest of the data set
-    # for data_set in gl.possible_feature_combinations:
-    #     current_result_path = os.path.join(feature_evaluation_result_path, data_set)
-    #     gl.feature_blocks_to_use = data_set
-    #     fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
-    #     fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
+    for data_set in gl.possible_feature_combinations:
+        current_result_path = os.path.join(feature_evaluation_result_path, data_set)
+        gl.feature_blocks_to_use = data_set
+        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path)
+        fe.continue_performance_ablation_after_vif(current_result_path, "", complete_data_map)
 
     # Plot the mixed feature ablation study for the above considered subsets
     # for test_set in gl.possible_feature_combinations:

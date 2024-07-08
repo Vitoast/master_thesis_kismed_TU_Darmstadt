@@ -53,13 +53,15 @@ def explore_data(data_dictionary, output_directory):
                     # Creating the pie chart
                     plt.figure(figsize=(8, 5))
                     plt.bar(labels, sizes, color=['green', 'red'])
-                    plt.title(f'Ratio of {feature_name}')
                     plt.xlabel('Outcome')
                     plt.ylabel('Occurences')
 
                     if feature_count < gl.number_outcomes:
+                        plt.title(f'Ratio of {gl.outcome_descriptors[feature_count]}')
+
                         output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.png')
                     else:
+                        plt.title(f'Ratio of {feature_name}')
                         output_file_path = os.path.join(clinical_data_directory, f'bar_{cleaned_feature_name}.png')
 
                 else:
