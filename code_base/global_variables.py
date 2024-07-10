@@ -1,6 +1,6 @@
 # String descriptors of used classifiers
 # Only the two best performing are used in the final version, uncomment the rest to use them
-classifiers = ['SVM']#, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']'NaiveBayes',
+classifiers = ['NaiveBayes', 'SVM']#, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
 outcome_descriptors = ["AKI3", "AKD1", "LCOS", "AF", "Any"]
 number_outcomes = 5
@@ -18,7 +18,8 @@ feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
 possible_feature_combinations = ['PRE',
                                  'POST',
                                  'PRE_POST',
-                                 'PRE_POST_BEFORE',
+                                 'BEFORE_DURING',
+                                 'PRE_POST_BEFORE_DURING',
                                  'PRE_POST_BEFORE_DURING_AFTER']
 
 # Uniform colors for plots of used models

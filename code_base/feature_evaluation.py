@@ -1,3 +1,4 @@
+from conda_build import post
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import pandas as pd
 import numpy as np
@@ -44,7 +45,8 @@ def plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, rem
     for model in range(len(accuracies_per_model)):
         # ax.scatter(feature_counts, accuracies_per_model[model], label=classifiers[model]+'_accuracy')
         if len(removed_features) > 50:
-            sns.regplot(x=feature_counts, y=f1_scores_per_model[model], scatter_kws={"color": gl.classifier_colors[model]},
+            sns.regplot(x=feature_counts, y=f1_scores_per_model[model],
+                        scatter_kws={"color": gl.classifier_colors[model]},
                         line_kws={"color": gl.classifier_colors[model]}, order=6, label=gl.classifiers[model])
         else:
             plt.scatter(x=feature_counts, y=f1_scores_per_model[model], color=gl.classifier_colors[model],
@@ -85,7 +87,6 @@ def check_feature_variance_inflation(train_data_map, result_path):
 # Read in the VIF result file of a vif ablation study, there is one for all outcomes
 # It has one line with each deleted feature and its vif comma separated
 def read_feature_ablation_csv_file_vif(stats_file_path):
-
     marker_names = []
     f1_scores = []
 
@@ -105,7 +106,6 @@ def read_feature_ablation_csv_file_vif(stats_file_path):
 # Read in the performance result file of a vif ablation study, there is one for each outcome
 # It contains the accuracy and f1-scores for each model by each deleted feature
 def read_feature_ablation_excel_file_per_outcome_vif(stats_file_path):
-
     all_f1_scores, all_accuracies = [], []
 
     # Read the Excel file
@@ -401,7 +401,8 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
             for i in range(len(all_f1_scores[outcome])):
                 if not only_performance:
                     all_f1_scores[outcome][i] = list(np.concatenate((all_f1_scores[outcome][i], np.array(f1_scores))))
-                    all_accuracies[outcome][i] = list(np.concatenate((all_accuracies[outcome][i], np.array(accuracies))))
+                    all_accuracies[outcome][i] = list(
+                        np.concatenate((all_accuracies[outcome][i], np.array(accuracies))))
                 else:
                     all_f1_scores[outcome][i] = f1_scores
                     all_accuracies[outcome][i] = list(
@@ -435,3 +436,242 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
         plt.tight_layout()
         plt.savefig(plot_save_name)
         plt.close()
+
+
+# Perform a bottom up accumulation feature analysis
+# Start with training the models with every single feature, select the best performing and add them one by one
+# Additionally order each feature after their single performance and plot result like correlation
+def perform_feature_accumulation(complete_data_map, result_directory):
+    # Prepare data structures
+    os.makedirs(result_directory, exist_ok=True)
+    result_file_name = "feature_accumulation_study"
+    result_path = os.path.join(result_directory, result_file_name)
+    outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
+
+    complete_data_map = pre.filter_data_sub_sets(complete_data_map)
+
+    # Do all iterations per outcome
+    for outcome in range(gl.number_outcomes):
+
+        added_features, accuracies_per_model, f1_scores_per_model = [], [], []
+
+        # Consider each model per outcome separately, performance according to feature selection may vary
+        for model in range(len(gl.classifiers)):
+            added_features.append([])
+            accuracies_per_model.append([])
+            f1_scores_per_model.append([])
+            # Map to hold all features that are left
+            reference_map = complete_data_map.copy()
+            reduced_map = {}
+            stats_file_path = os.path.join(result_directory,
+                                           gl.outcome_descriptors[outcome] + '_'
+                                           + gl.classifiers[model] + "_accumulation_study.txt")
+
+            # Do loop over all features, classify and save f1
+            # Open file to save results
+            with open(stats_file_path, 'w') as stats_file:
+
+                # Perform feature accumulation until total of 10 features,
+                # above there was no performance gain in earlier evaluations
+                for feature_count in range(0, 10):
+                    added_feature_trials = []
+                    accuracy_ablation_results = []
+                    f1_score_ablation_results = []
+
+                    # Add each feature and train on with resulting data set
+                    for feature_name, feature_data in reference_map.items():
+                        # Add feature to reference test map
+                        reduced_map[feature_name] = feature_data
+
+                        # Skip outcome classes
+                        if feature_name in gl.original_outcome_strings or any(
+                                isinstance(elem, str) for elem in feature_data):
+                            continue
+
+                        # Add feature testwise
+                        added_feature_trials.append(feature_name)
+
+                        # Classify with the reduced set
+                        accuracy_result, f1_score = clf.classify_k_fold(reduced_map, outcome,
+                                                                        result_path, [],
+                                                                        gl.classifiers[model], False, False)
+                        accuracy_ablation_results.append(accuracy_result[0])
+                        f1_score_ablation_results.append(f1_score[0])
+
+                        # Remove feature from set
+                        reduced_map.pop(feature_name)
+
+                    # Extract feature whose addition leads to the biggest performance gain
+                    best_feature_idx = f1_score_ablation_results.index(max(f1_score_ablation_results))
+                    best_feature = added_feature_trials[best_feature_idx]
+                    # Save performance of classification after feature is added
+                    accuracies_per_model[model].append(accuracy_ablation_results[best_feature_idx])
+                    f1_scores_per_model[model].append(f1_score_ablation_results[best_feature_idx])
+                    # Remove chosen feature from reference set
+                    reference_map.pop(best_feature)
+                    # Add it permanently to the trial set
+                    reduced_map[added_feature_trials[best_feature_idx]] = complete_data_map[added_feature_trials[best_feature_idx]]
+                    added_features[model].append(best_feature)
+                    stats_file.write(f"{best_feature},"
+                                     f"{f1_score_ablation_results[best_feature_idx]},"
+                                     f"{accuracy_ablation_results[best_feature_idx]},")
+                    print('Feature', best_feature, 'added for', gl.outcome_descriptors[outcome],
+                          gl.classifiers[model], 'with F1-Score', f1_score_ablation_results[best_feature_idx])
+
+                    # In the first round plot the f1-scores of all the features from their single prediction
+                    if feature_count == 0:
+                        # Sort the f1-scores descending and reorder the accuracies accordingly
+                        sorted_indices = np.argsort(f1_score_ablation_results)[::-1]
+                        f1_score_ablation_results = [f1_score_ablation_results[i] for i in sorted_indices]
+                        accuracy_ablation_results = [accuracy_ablation_results[i] for i in sorted_indices]
+                        marker_names_sorted = [added_feature_trials[i] for i in sorted_indices]
+
+                        # Generate unique colors
+                        colors = [plt.cm.get_cmap('viridis', len(marker_names_sorted))(i)
+                                  for i in range(len(f1_score_ablation_results))]
+
+                        # Create the subplots, size depending on the number of features/ length of the legend
+                        if len(marker_names_sorted) > 101:
+                            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(18, 10))
+                        else:
+                            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
+
+                        # for descriptor in ['Correlation Coefficient', 'P-Value']:
+                        for i, (f1_score, color, name) in enumerate(
+                                zip(f1_score_ablation_results, colors, marker_names_sorted)):
+                            ax1.scatter(i, f1_score, color=color, label=name)
+                        ax1.set_title(
+                            'Sorted single feature performance study ' + gl.outcome_descriptors[outcome]
+                            + ' using ' + gl.classifiers[model])
+                        ax1.set_xlabel('Marker')
+                        ax1.set_ylabel('F1-Score')
+
+                        # Scatter plot for sorted p-values
+                        for i, (acc, color) in enumerate(zip(accuracy_ablation_results, colors)):
+                            ax2.scatter(i, acc, color=color)
+                        ax2.set_title('Accuracies Corresponding to Sorted Features')
+                        ax2.set_xlabel('Marker')
+                        ax2.set_ylabel('Accuracy')
+
+                        # Add legend besides plots
+                        fig.tight_layout()
+                        handles, labels = ax1.get_legend_handles_labels()
+                        box = ax1.get_position()
+                        ax1.set_position([box.x0, box.y0, box.width * 1, box.height])
+
+                        # Differentiate how much space legend takes
+                        if len(handles) > 101:
+                            fig.subplots_adjust(right=0.5)
+                            n_col = 3
+                        elif len(handles) > 51:
+                            fig.subplots_adjust(right=0.55)
+                            n_col = 2
+                        else:
+                            fig.subplots_adjust(right=0.7)
+                            n_col = 1
+                        plt.legend(handles, labels, bbox_to_anchor=(1.1, 2.2), loc='upper left', fontsize='small',
+                                   ncol=n_col)
+
+                        # Save plot as PNG file
+                        output_file_path = os.path.join(result_directory,
+                                                        f'single_feature_performance_study_'
+                                                        f'{gl.outcome_descriptors[outcome]}_{gl.classifiers[model]}.jpg')
+                        plt.savefig(output_file_path)
+                        plt.close()
+                        # Save F1-Scores and accuracies for each single feature
+
+                        single_results_file_path = os.path.join(result_directory,
+                                                                gl.outcome_descriptors[outcome] + '_'
+                                                                + gl.classifiers[model] + "_single_performance.txt")
+                        with open(single_results_file_path, 'w') as res_file:
+                            for ordered_feature in range(len(marker_names_sorted)):
+                                res_file.write(f"{marker_names_sorted[ordered_feature]},"
+                                               f"{f1_score_ablation_results[ordered_feature]},"
+                                               f"{accuracy_ablation_results[ordered_feature]},")
+
+        # Save plot that compares classifiers for each outcome
+        plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, added_features[0],
+                                      outcome_result_paths[outcome] + '_plot',
+                                      gl.outcome_descriptors[outcome])
+
+
+# Analyse the difference between the PRE and POST markers
+# Models are trained with each single feature and the performance for both sets is saved in an Excel file per outcome
+def compare_pre_to_post_marker_performance(complete_data_map, result_path):
+    os.makedirs(result_path, exist_ok=True)
+    result_file_path = os.path.join(result_path, 'pre_post_single_performance.xlsx')
+
+    # Prepare data structures that hold outcomes of study
+    accuracies_per_outcome_pre, f1_scores_per_outcome_pre = pe.create_result_structure()
+    accuracies_per_outcome_post, f1_scores_per_outcome_post = pe.create_result_structure()
+
+    # Get features for both sets
+    gl.feature_blocks_to_use = 'PRE'
+    pre_marker_map = pre.filter_data_sub_sets(complete_data_map)
+    pre_marker_single_map = {}
+    gl.feature_blocks_to_use = 'POST'
+    post_marker_map = pre.filter_data_sub_sets(complete_data_map)
+    post_marker_single_map = {}
+
+    # Set global data set variable so PRE and POST does not get kicked out later
+    gl.feature_blocks_to_use = 'PRE_POST'
+
+    # Then perform classification with all given models and evaluate the performance with f1 score
+    for outcome_value in range(gl.number_outcomes):
+        result_file_path = os.path.join(result_path, gl.outcome_descriptors[outcome_value]
+                                        + 'pre_post_single_performance.xlsx')
+
+        for model in gl.classifiers:
+            for (pre_key, pre_data), (post_key, post_data) in zip(pre_marker_map.items(), post_marker_map.items()):
+
+                pre_marker_single_map[pre_key] = pre_data
+                post_marker_single_map[post_key] = post_data
+
+                # If current feature is an outcome, do not classify
+                if pre_key in gl.original_outcome_strings or post_key in gl.original_outcome_strings:
+                    continue
+
+                # Train and predict with k-fold validation for PRE
+                accuracy_results, f1_scores = clf.classify_k_fold(pre_marker_single_map, outcome_value,
+                                                                  result_path, [],
+                                                                  model, False, False)
+                accuracies_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
+                f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_scores)
+
+                # Train and predict with k-fold validation for POST
+                accuracy_results, f1_scores = clf.classify_k_fold(post_marker_single_map, outcome_value,
+                                                                  result_path, [],
+                                                                  model, False, False)
+                accuracies_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
+                f1_scores_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(f1_scores)
+
+                # Remove feature again from trial set
+                pre_marker_single_map.pop(pre_key)
+                post_marker_single_map.pop(post_key)
+
+        # Save the results to an Excel file
+        for pre_key, post_key in zip(pre_marker_map.keys(), post_marker_map.keys()):
+
+            # Skip outcomes
+            if pre_key in gl.original_outcome_strings or post_key in gl.original_outcome_strings:
+                continue
+
+            # Extract current values of iteration from overall scores
+            temp_accuracies = []
+            for val in accuracies_per_outcome_pre[outcome_value]:
+                temp_accuracies.append(val[list(pre_marker_map.keys()).index(pre_key)-gl.number_outcomes])
+            temp_f1_scores = []
+            for val in f1_scores_per_outcome_pre[outcome_value]:
+                temp_f1_scores.append(val[list(pre_marker_map.keys()).index(pre_key)-gl.number_outcomes])
+            save_results_to_file(np.array(temp_accuracies).flatten(), np.array(temp_f1_scores).flatten(),
+                                 result_file_path, pre_key)
+
+            # Extract current values of iteration from overall scores
+            temp_accuracies = []
+            for val in accuracies_per_outcome_post[outcome_value]:
+                temp_accuracies.append(val[list(post_marker_map.keys()).index(post_key)-gl.number_outcomes])
+            temp_f1_scores = []
+            for val in f1_scores_per_outcome_post[outcome_value]:
+                temp_f1_scores.append(val[list(post_marker_map.keys()).index(post_key)-gl.number_outcomes])
+            save_results_to_file(np.array(temp_accuracies).flatten(), np.array(temp_f1_scores).flatten(),
+                                 result_file_path, post_key)

@@ -102,14 +102,14 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
     # Preprocess data accordingly
     tmp_train_data_map, tmp_test_data_map = pre.preprocess_data(train_data_map.copy(), test_data_map.copy(),
                                                                 outcome_target_index,
-                                                                standardize=gl.standardize,
-                                                                impute=gl.impute,
-                                                                z_score_threshold=gl.filter_outliers_z_score,
-                                                                oversample_rate=gl.oversample)
-                                                                # standardize=current_standardize,
-                                                                # impute=current_impute,
-                                                                # z_score_threshold=current_z_score_threshold,
-                                                                # oversample_rate=current_oversample_rate)
+                                                                # standardize=gl.standardize,
+                                                                # impute=gl.impute,
+                                                                # z_score_threshold=gl.filter_outliers_z_score,
+                                                                # oversample_rate=gl.oversample)
+                                                                standardize=current_standardize,
+                                                                impute=current_impute,
+                                                                z_score_threshold=current_z_score_threshold,
+                                                                oversample_rate=current_oversample_rate)
 
     x_train, x_test, y_train, y_test = split_maps(tmp_train_data_map, tmp_test_data_map)
     y_train = np.array(y_train).flatten()
