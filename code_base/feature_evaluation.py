@@ -545,6 +545,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                             + ' using ' + gl.classifiers[model])
                         ax1.set_xlabel('Marker')
                         ax1.set_ylabel('F1-Score')
+                        ax1.grid(True)
 
                         # Scatter plot for sorted p-values
                         for i, (acc, color) in enumerate(zip(accuracy_ablation_results, colors)):
@@ -552,6 +553,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                         ax2.set_title('Accuracies Corresponding to Sorted Features')
                         ax2.set_xlabel('Marker')
                         ax2.set_ylabel('Accuracy')
+                        ax2.grid(True)
 
                         # Add legend besides plots
                         fig.tight_layout()

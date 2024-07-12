@@ -51,7 +51,8 @@ def main():
     umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
     # exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
-    # Compute correlation metrics of data set
+    # Compute correlation metrics of data set, without irrelevant after surgery data
+    # gl.feature_blocks_to_use = 'PRE_POST_BEFORE_DURING'
     # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "correlation_results"))
     # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
@@ -101,13 +102,13 @@ def main():
         # Option 2: Do only performance ablation
         # fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
         # Option 3: Do feature accumulation study
-        fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
+        # fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
         # Use this to plot former ablation studies
         # fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
 
     # Analyse difference between PRE and POST version of the same markers
     pre_post_comparison_result_path = os.path.join(feature_evaluation_result_path, 'pre_post_comparison_results')
-    fe.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
+    # fe.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
 
     # Plot the mixed feature ablation study for the above considered subsets
     # for test_set in gl.possible_feature_combinations:

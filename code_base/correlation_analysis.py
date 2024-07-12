@@ -7,6 +7,7 @@ import seaborn as sns
 
 import global_variables as gl
 import explorational_data_analysis as exp
+import preprocess_data as pre
 
 
 # Compute point biserial correlation for each clinical marker
@@ -16,6 +17,8 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
     marker_names, marker_data = [], []
     all_feature_names, all_feature_data = [], []
     correlation_coefficients, p_values, sorted_features = [], [], []
+
+    data_dictionary = pre.filter_data_sub_sets(data_dictionary)
 
     # Filter markers based on their belonging to POST or PRE
     feature_count = 0
@@ -74,8 +77,11 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
             colors = [plt.cm.get_cmap('viridis', len(correlation_coefficients[outcome]))(i)
                       for i in range(len(correlation_coefficients[outcome]))]
 
-            # Create the subplots
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
+            # Create the subplots, size depending on the number of features/ length of the legend
+            if len(marker_names_sorted) > 101:
+                fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(18, 10))
+            else:
+                fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
 
             # for descriptor in ['Correlation Coefficient', 'P-Value']:
             for i, (coeff, color, name) in enumerate(
@@ -84,21 +90,35 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
             ax1.set_title('Sorted Absolute Correlation Coefficients of Markers with ' + gl.outcome_descriptors[outcome])
             ax1.set_xlabel('Marker')
             ax1.set_ylabel('Correlation Coefficient')
+            ax1.grid(True)
 
             # Scatter plot for sorted p-values
-            for i, (pval, color) in enumerate(zip(p_values[outcome], colors)):
-                ax2.scatter(i, pval, color=color)
+            for i, (pval, color, name) in enumerate(
+                    zip(p_values[outcome], colors, sorted_features[outcome])):
+                ax2.scatter(i, pval, color=color, label=name)
             ax2.set_title('P-Values Corresponding to Sorted Correlation Coefficients')
             ax2.set_xlabel('Marker')
             ax2.set_ylabel('P-Value')
+            ax2.axhline(y=0.05, color='grey', linestyle='--', linewidth=2,
+                        label='Significance threshold of P-Values (0.05)')
+            ax2.grid(True)
 
             # Add legend besides plots
             fig.tight_layout()
-            handles, labels = ax1.get_legend_handles_labels()
+            handles, labels = ax2.get_legend_handles_labels()
             box = ax1.get_position()
             ax1.set_position([box.x0, box.y0, box.width * 1, box.height])
-            fig.subplots_adjust(right=0.7)
-            plt.legend(handles, labels, bbox_to_anchor=(1.1, 2.2), loc='upper left', fontsize='small')
+            # Differentiate how much space legend takes
+            if len(handles) > 101:
+                fig.subplots_adjust(right=0.5)
+                n_col = 3
+            elif len(handles) > 51:
+                fig.subplots_adjust(right=0.55)
+                n_col = 2
+            else:
+                fig.subplots_adjust(right=0.7)
+                n_col = 1
+            plt.legend(handles, labels, bbox_to_anchor=(1.1, 2.2), loc='upper left', fontsize='small', ncol=n_col)
 
             # Save plot as PNG file
             cleaned_feature_name = exp.clean_feature_name(outcome_names[outcome])
