@@ -3,7 +3,7 @@
 classifiers = ['NaiveBayes', 'SVM']#, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
 outcome_descriptors = ["AKD", "AKI1", "LCOS", "AF", "Any"]
-number_outcomes = 5
+number_outcomes = len(outcome_descriptors)
 # List used to save complete descriptors of adverse outcomes in data
 original_outcome_strings = []
 
@@ -46,18 +46,18 @@ oversampling_parameters = [1, 0]
 
 # Parameter combinations for preprocessing to be the best for each outcome and model combination (precomputed)
 preprocess_parameters = {
-    'AKI3,NaiveBayes': [False, 'mean_std', 6, 0],
-    'AKI3,LogisticRegression': [True, 'mean_std', 10, 1],
-    'AKI3,DecisionTree': [False, 'mean_group', 11, 1],
-    'AKI3,SVM': [True, 'mean_std', 10, 1],
-    'AKI3,RandomForest': [False, 'mean_std', 11, 1],
-    'AKI3,XGBoost': [False, 'mean_std', 11, 1],
-    'AKD1,NaiveBayes': [True, 'mean_std', 4, 1],
-    'AKD1,LogisticRegression': [True, 'median_std', 14, 0],
-    'AKD1,DecisionTree': [False, 'mean_group', 14, 0],
-    'AKD1,SVM': [True, 'mean_group', 13, 1],
-    'AKD1,RandomForest': [True, 'median_std', 10, 0],
-    'AKD1,XGBoost': [True, 'mean_std', 11, 0],
+    'AKD,NaiveBayes': [False, 'mean_std', 6, 0],
+    'AKD,LogisticRegression': [True, 'mean_std', 10, 1],
+    'AKD,DecisionTree': [False, 'mean_group', 11, 1],
+    'AKD,SVM': [True, 'mean_std', 10, 1],
+    'AKD,RandomForest': [False, 'mean_std', 11, 1],
+    'AKD,XGBoost': [False, 'mean_std', 11, 1],
+    'AKI1,NaiveBayes': [True, 'mean_std', 4, 1],
+    'AKI1,LogisticRegression': [True, 'median_std', 14, 0],
+    'AKI1,DecisionTree': [False, 'mean_group', 14, 0],
+    'AKI1,SVM': [True, 'mean_group', 13, 1],
+    'AKI1,RandomForest': [True, 'median_std', 10, 0],
+    'AKI1,XGBoost': [True, 'mean_std', 11, 0],
     'LCOS,NaiveBayes': [False, 'mean_std', 15, 1],
     'LCOS,LogisticRegression': [False, 'mean_std', 16, 0],
     'LCOS,DecisionTree': [False, 'median_std', 16, 0],
@@ -80,14 +80,14 @@ preprocess_parameters = {
 
 # These parameters are to set up the prediction models in the best way corresponding to the outcomes (precomputed)
 model_parameters = {
-    'AKI3,NaiveBayes': {'var_smoothing': 1.0},
-    'AKD1,NaiveBayes': {'var_smoothing': 1.0},
+    'AKD,NaiveBayes': {'var_smoothing': 1.0},
+    'AKI1,NaiveBayes': {'var_smoothing': 1.0},
     'LCOS,NaiveBayes': {'var_smoothing': 1.0},
     'AF,NaiveBayes': {'var_smoothing': 0.0001},
     'Any,NaiveBayes': {'var_smoothing': 1.0},
-    'AKI3,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.0, 'degree': 3, 'kernel': 'rbf',
+    'AKD,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.0, 'degree': 3, 'kernel': 'rbf',
                  'probability': True, 'shrinking': True, 'tol': 0.0001},
-    'AKD1,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.0, 'degree': 2, 'kernel': 'rbf',
+    'AKI1,SVM': {'C': 0.01, 'class_weight': None, 'coef0': 0.0, 'degree': 2, 'kernel': 'rbf',
                  'probability': False, 'shrinking': False, 'tol': 0.0001},
     'LCOS,SVM': {'C': 1, 'class_weight': 'balanced', 'coef0': 0.1, 'degree': 5, 'kernel': 'sigmoid',
                  'probability': True, 'shrinking': False, 'tol': 0.0001},

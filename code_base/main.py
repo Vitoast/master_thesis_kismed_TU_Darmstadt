@@ -52,10 +52,12 @@ def main():
     # exp.plot_umap(complete_data_map, umap_exploration_result_path)
 
     # Compute correlation metrics of data set, without irrelevant after surgery data
+    correlation_result_path = os.path.join(result_path, "correlation_results")
     # gl.feature_blocks_to_use = 'PRE_POST_BEFORE_DURING'
-    # cor.compute_marker_to_outcome_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
-    # cor.compute_marker_correlation_matrix(train_data_map, os.path.join(result_path, "correlation_results"))
-    # cor.show_pairwise_marker_correlation(train_data_map, os.path.join(result_path, "correlation_results"))
+    # cor.compute_marker_to_outcome_correlation(train_data_map, correlation_result_path)
+    # cor.compute_marker_correlation_matrix(train_data_map, correlation_result_path)
+    # cor.show_pairwise_marker_correlation(train_data_map, correlation_result_path)
+    cor.sort_and_prepare_data(correlation_result_path)
 
     # Train classifier and predict
     classification_result_path = os.path.join(result_path, "classification_results")

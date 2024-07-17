@@ -196,3 +196,74 @@ def save_feature_importance(marker_names, correlation_coefficients, p_values, ou
             for feature_name, correlation, p_value in zip(marker_names[outcome], correlation_coefficients[outcome],
                                                           p_values[outcome]):
                 stats_file.write(f'{feature_name},{correlation},{p_value},\n')
+
+
+# Read in a SVD file that is produced by save_feature_importance()
+def read_correlation_file(file_path):
+    data = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            entries = line.strip().split(',')
+            descriptor, cor_coeff, p_value = entries[0], float(entries[1]), float(entries[2])
+            data.append((descriptor, cor_coeff, p_value))
+    return data
+
+
+def sort_and_prepare_data(result_path):
+    """Sort the data from multiple SVD files and prepare it for writing to an Excel file."""
+    combined_data = {}
+
+    excel_data = {'Descriptors': []}
+
+    for outcome in gl.outcome_descriptors:
+        current_file_path = os.path.join(result_path, outcome + '_correlation_coefficients_sorted.txt')
+        data = read_correlation_file(current_file_path)
+        for descriptor, coeff, p_value in data:
+            if 'PRE' in descriptor:
+                base_descriptor = descriptor[:-3]
+                suffix = descriptor[-3:]
+            elif 'POST' in descriptor:
+                base_descriptor = descriptor[:-4]
+                suffix = descriptor[-4:]
+            if 'PRE' in descriptor or 'POST' in descriptor:
+                if base_descriptor not in combined_data:
+                    combined_data[base_descriptor] = {}
+                if suffix not in combined_data[base_descriptor]:
+                    combined_data[base_descriptor][suffix] = {}
+                combined_data[base_descriptor][suffix][outcome] = (coeff, p_value)
+
+        excel_data[f'Type_' + outcome] = []
+        excel_data[f'Correlation Coefficient_' + outcome] = []
+        excel_data[f'P-Value_' + outcome] = []
+
+    for base_descriptor, suffixes in combined_data.items():
+        excel_data['Descriptors'].append(base_descriptor)
+        for outcome in gl.outcome_descriptors:
+            selected_type, selected_coeff, selected_pval = '-', '-', '-'
+
+            if 'PRE' in suffixes and suffixes['PRE'].get(outcome) and suffixes['PRE'][outcome][1] <= 0.05:
+                pre_coeff = suffixes['PRE'][outcome][0]
+            else:
+                pre_coeff = None
+
+            if 'POST' in suffixes and suffixes['POST'].get(outcome) and suffixes['POST'][outcome][1] <= 0.05:
+                post_coeff = suffixes['POST'][outcome][0]
+            else:
+                post_coeff = None
+
+            if pre_coeff is not None and (post_coeff is None or pre_coeff > post_coeff):
+                selected_type = 'PRE'
+                selected_coeff = suffixes['PRE'][outcome][0]
+                selected_pval = suffixes['PRE'][outcome][1]
+            elif post_coeff is not None:
+                selected_type = 'POST'
+                selected_coeff = suffixes['POST'][outcome][0]
+                selected_pval = suffixes['POST'][outcome][1]
+
+            excel_data[f'Type_' + outcome].append(selected_type)
+            excel_data[f'Correlation Coefficient_' + outcome].append(selected_coeff)
+            excel_data[f'P-Value_' + outcome].append(selected_pval)
+
+    output_file_path = os.path.join(result_path, 'combined_ordered_markers.xlsx')
+    with pd.ExcelWriter(output_file_path) as writer:
+        pd.DataFrame(excel_data).to_excel(writer, index=False, sheet_name='SVD Data')
