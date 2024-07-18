@@ -57,7 +57,7 @@ def main():
     # cor.compute_marker_to_outcome_correlation(train_data_map, correlation_result_path)
     # cor.compute_marker_correlation_matrix(train_data_map, correlation_result_path)
     # cor.show_pairwise_marker_correlation(train_data_map, correlation_result_path)
-    cor.sort_and_prepare_data(correlation_result_path)
+    # cor.sort_marker_correlation_data(correlation_result_path)
 
     # Train classifier and predict
     classification_result_path = os.path.join(result_path, "classification_results")
@@ -104,7 +104,7 @@ def main():
         # Option 2: Do only performance ablation
         # fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
         # Option 3: Do feature accumulation study
-        # fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
+        fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
         # Use this to plot former ablation studies
         # fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
 

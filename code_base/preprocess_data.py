@@ -30,6 +30,11 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
         print('Invalid imputation method')
         return
 
+    # Create copies of the raw input to keep a reference
+    ref_train_data_dictionary = train_data_dictionary.copy()
+    ref_test_data_dictionary = test_data_dictionary.copy()
+
+    # Filter data subsets to keep only requested parts
     train_data_dictionary = filter_data_sub_sets(train_data_dictionary)
     test_data_dictionary = filter_data_sub_sets(test_data_dictionary)
 
@@ -144,9 +149,19 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     # print('number of points removed', np.count_nonzero(np.invert(remove_points_mask)), 'with threshold', z_score_threshold)
     # print('Oversampled', multiplier, 'times, achieved class rate: ', current_class_rate)
 
-    # Return processed train and test sets
+    if 'PMP' in gl.feature_blocks_to_use:
+        for (train_key, train_value), (test_key, test_value) in zip(ref_train_data_dictionary, ref_test_data_dictionary):
+            if 'PRE' in train_key:
+                train_data_dictionary[train_key[:-3] + 'DIF'] = train_value
+                if test_key is not None:
+                    test_data_dictionary[train_key[:-3] + 'DIF'] = test_value
+            if 'POST' in train_key:
+                train_data_dictionary[train_key[:-4] + 'DIF'] = np.abs(train_data_dictionary[train_key[:-4] + 'DIF'] - train_value)
+                if test_key is not None:
+                    test_data_dictionary[test_key[:-4] + 'DIF'] = np.abs(test_data_dictionary[test_key[:-4] + 'DIF'] - test_value)    # Return processed train and test sets
+
     if len(train_data_dictionary[list(train_data_dictionary.keys())[0]]) == 0:
-        return 89
+        return None, None
     return train_data_dictionary, test_data_dictionary
 
 

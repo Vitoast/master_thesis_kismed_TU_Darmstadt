@@ -473,7 +473,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
 
                 # Perform feature accumulation until total of 10 features,
                 # above there was no performance gain in earlier evaluations
-                for feature_count in range(0, 10):
+                for feature_count in range(0, 1):
                     added_feature_trials = []
                     accuracy_ablation_results = []
                     f1_score_ablation_results = []
@@ -514,7 +514,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                     added_features[model].append(best_feature)
                     stats_file.write(f"{best_feature},"
                                      f"{f1_score_ablation_results[best_feature_idx]},"
-                                     f"{accuracy_ablation_results[best_feature_idx]},")
+                                     f"{accuracy_ablation_results[best_feature_idx]},\n")
                     print('Feature', best_feature, 'added for', gl.outcome_descriptors[outcome],
                           gl.classifiers[model], 'with F1-Score', f1_score_ablation_results[best_feature_idx])
 
@@ -589,7 +589,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                             for ordered_feature in range(len(marker_names_sorted)):
                                 res_file.write(f"{marker_names_sorted[ordered_feature]},"
                                                f"{f1_score_ablation_results[ordered_feature]},"
-                                               f"{accuracy_ablation_results[ordered_feature]},")
+                                               f"{accuracy_ablation_results[ordered_feature]},\n")
 
         # Save plot that compares classifiers for each outcome
         plot_feature_ablation_results(accuracies_per_model, f1_scores_per_model, added_features[0],
@@ -621,7 +621,7 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
     # Then perform classification with all given models and evaluate the performance with f1 score
     for outcome_value in range(gl.number_outcomes):
         result_file_path = os.path.join(result_path, gl.outcome_descriptors[outcome_value]
-                                        + 'pre_post_single_performance.xlsx')
+                                        + '_pre_post_single_performance.xlsx')
 
         for model in gl.classifiers:
             for (pre_key, pre_data), (post_key, post_data) in zip(pre_marker_map.items(), post_marker_map.items()):

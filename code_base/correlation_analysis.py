@@ -209,8 +209,7 @@ def read_correlation_file(file_path):
     return data
 
 
-def sort_and_prepare_data(result_path):
-    """Sort the data from multiple SVD files and prepare it for writing to an Excel file."""
+def sort_marker_correlation_data(result_path):
     combined_data = {}
 
     excel_data = {'Descriptors': []}
