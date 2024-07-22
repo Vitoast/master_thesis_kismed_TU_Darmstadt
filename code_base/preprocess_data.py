@@ -150,15 +150,16 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     # print('Oversampled', multiplier, 'times, achieved class rate: ', current_class_rate)
 
     if 'PMP' in gl.feature_blocks_to_use:
-        for (train_key, train_value), (test_key, test_value) in zip(ref_train_data_dictionary, ref_test_data_dictionary):
+        for (train_key, train_value), (test_key, test_value) \
+                in zip(ref_train_data_dictionary.items(), ref_test_data_dictionary.items()):
             if 'PRE' in train_key:
                 train_data_dictionary[train_key[:-3] + 'DIF'] = train_value
                 if test_key is not None:
                     test_data_dictionary[train_key[:-3] + 'DIF'] = test_value
             if 'POST' in train_key:
-                train_data_dictionary[train_key[:-4] + 'DIF'] = np.abs(train_data_dictionary[train_key[:-4] + 'DIF'] - train_value)
+                train_data_dictionary[train_key[:-4] + 'DIF'] = np.abs(np.subtract(train_data_dictionary[train_key[:-4] + 'DIF'], train_value))
                 if test_key is not None:
-                    test_data_dictionary[test_key[:-4] + 'DIF'] = np.abs(test_data_dictionary[test_key[:-4] + 'DIF'] - test_value)    # Return processed train and test sets
+                    test_data_dictionary[test_key[:-4] + 'DIF'] = np.abs(np.subtract(test_data_dictionary[test_key[:-4] + 'DIF'], test_value))    # Return processed train and test sets
 
     if len(train_data_dictionary[list(train_data_dictionary.keys())[0]]) == 0:
         return None, None
@@ -170,11 +171,15 @@ def filter_data_sub_sets(data_map):
     tmp_data_map = data_map.copy()
     before_data_reached, during_data_reached, after_data_reached = False, False, False
 
-    for key in data_map.keys():
+    for key, value in data_map.items():
         # Remove String data
         if not all(isinstance(x, (int, float)) for x in data_map[key]):
             tmp_data_map.pop(key)
             continue
+
+        # If PMP is used add new field to map
+        if 'PRE' in key and 'PMP' in gl.feature_blocks_to_use:
+            tmp_data_map[key[:-3] + 'DIF'] = value
 
         # Remove SAP and HP markers
         if (('PRE' in key and 'PRE' not in gl.feature_blocks_to_use)

@@ -473,7 +473,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
 
                 # Perform feature accumulation until total of 10 features,
                 # above there was no performance gain in earlier evaluations
-                for feature_count in range(0, 1):
+                for feature_count in range(0, 10):
                     added_feature_trials = []
                     accuracy_ablation_results = []
                     f1_score_ablation_results = []

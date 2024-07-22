@@ -18,7 +18,7 @@ original_outcome_strings = []
 feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
 possible_feature_combinations = [#'PRE',
                                  #'POST',
-                                 'PRE_POST',
+                                 #'PRE_POST',
                                  'PMP']#,
                                  #'BEFORE_DURING',
                                  #'PRE_POST_BEFORE_DURING',
