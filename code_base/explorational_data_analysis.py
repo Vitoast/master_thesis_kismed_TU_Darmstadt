@@ -37,63 +37,78 @@ def explore_data(data_dictionary, output_directory):
         for feature_name, feature_data in data_dictionary.items():
             # Check if the feature data contains only numeric values
             if all(isinstance(x, (int, float)) for x in feature_data):
-                # Clean data from nan
-                cleaned_data = [x for x in feature_data if not np.isnan(x)]
+                # Histograms are outcome dependent
+                for outcome in range(gl.number_outcomes):
+                    # Clean data from nan
+                    # Create the cleaned data by filtering out NaN values
+                    cleaned_data = [(x, label) for x, label in zip(feature_data, data_dictionary[gl.original_outcome_strings[outcome]]) if not np.isnan(x)]
 
-                cleaned_feature_name = clean_feature_name(feature_name)
+                    # Unpack the cleaned data into separate arrays
+                    cleaned_x_values, cleaned_labels = zip(*cleaned_data)
 
-                classification = all(x in [0, 1] for x in cleaned_data)
+                    cleaned_feature_name = clean_feature_name(feature_name)
 
-                # Determine subfolder based on feature name
-                if classification:
-                    counts = Counter(cleaned_data)
-                    labels = ['No', 'Yes']
-                    sizes = [counts[0], counts[1]]
+                    classification = all(x in [0, 1] for x in cleaned_data)
 
-                    # Creating the pie chart
-                    plt.figure(figsize=(8, 5))
-                    plt.bar(labels, sizes, color=['green', 'red'])
-                    plt.xlabel('Outcome')
-                    plt.ylabel('Occurences')
+                    # Determine subfolder based on feature name
+                    if classification:
+                        counts = Counter(cleaned_data)
+                        labels = ['No', 'Yes']
+                        sizes = [counts[0], counts[1]]
 
-                    if feature_count < gl.number_outcomes:
-                        plt.title(f'Ratio of {gl.outcome_descriptors[feature_count]}')
+                        # Creating the pie chart
+                        plt.figure(figsize=(8, 5))
+                        plt.bar(labels, sizes, color=['green', 'red'])
+                        plt.xlabel('Outcome')
+                        plt.ylabel('Occurences')
 
-                        output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.png')
+                        if feature_count < gl.number_outcomes:
+                            plt.title(f'Ratio of {gl.outcome_descriptors[feature_count]}')
+
+                            output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.png')
+                        else:
+                            plt.title(f'Ratio of {feature_name}')
+                            output_file_path = os.path.join(clinical_data_directory, f'bar_{cleaned_feature_name}.png')
+
                     else:
-                        plt.title(f'Ratio of {feature_name}')
-                        output_file_path = os.path.join(clinical_data_directory, f'bar_{cleaned_feature_name}.png')
+                        plt.figure(figsize=(8, 4))
 
-                else:
-                    # Plot a histogram of the data
-                    plt.figure(figsize=(8, 4))
-                    sns.histplot(cleaned_data, bins=20, kde=True, color='green', edgecolor='black')
-                    plt.title(f'Histogram of feature {feature_name}')
-                    plt.xlabel('Value')
-                    plt.ylabel('Occurrences')
-                    plt.grid(True)
-                    plt.tight_layout()
+                        data_frame = pd.DataFrame({
+                            'Value': np.array(cleaned_x_values),
+                            'Outcome (1=yes)': np.array(cleaned_labels)
+                        })
 
-                    if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
-                        output_file_path = os.path.join(clinical_marker_directory, f'hist_{cleaned_feature_name}.png')
-                    else:
-                        output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}.png')
+                        # Create histograms using seaborn
+                        sns.histplot(data=data_frame, x='Value', hue='Outcome (1=yes)', multiple='dodge', bins=40,
+                                     kde=True, edgecolor='black', alpha=0.5)
 
-                        # Save plot as PNG file
-                plt.savefig(output_file_path)
-                plt.close()
-                feature_count += 1
+                        # sns.histplot(cleaned_data, bins=20, kde=True, color='green', edgecolor='black')
+                        plt.title(f'Histogram of feature {feature_name} for outcome {gl.outcome_descriptors[outcome]}')
+                        plt.xlabel('Value')
+                        plt.ylabel('Occurrences')
+                        plt.grid(True)
+                        plt.tight_layout()
 
-                # Calculate mean and variance
-                mean = np.mean(cleaned_data)
-                var = np.var(cleaned_data)
-                median = np.median(cleaned_data)
-                minimum = min(cleaned_data)
-                maximum = max(cleaned_data)
+                        if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
+                            output_file_path = os.path.join(clinical_marker_directory, f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
+                        else:
+                            output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
 
-                # Save mean and variance to text file
-                stats_file.write(
-                    f'{feature_name}: Mean: {mean}, Median: {median}, Variance: {var}, Data Points: {len(cleaned_data)}, Min Value: {minimum}, Max Value: {maximum}\n')
+                            # Save plot as PNG file
+                    plt.savefig(output_file_path)
+                    plt.close()
+                    feature_count += 1
+
+                    # Calculate mean and variance
+                    mean = np.mean(cleaned_x_values)
+                    var = np.var(cleaned_x_values)
+                    median = np.median(cleaned_x_values)
+                    minimum = min(cleaned_data)
+                    maximum = max(cleaned_data)
+
+                    # Save mean and variance to text file
+                    stats_file.write(
+                        f'{feature_name}: Mean: {mean}, Median: {median}, Variance: {var}, Data Points: {len(cleaned_x_values)}, Min Value: {minimum}, Max Value: {maximum}\n')
 
 
 # Check that the data sets are suitable for classification

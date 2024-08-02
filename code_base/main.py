@@ -48,10 +48,10 @@ def main():
     # Explore data set, plot data distribution and get statistical metrics
     exploration_result_path = os.path.join(result_path, 'exploration_results')
     # exp.check_data_sets(train_data_map, test_data_map)
-    # if gl.standardize or gl.impute:
-    #     exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
-    # else:
-    #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
+    if gl.standardize or gl.impute:
+        exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
+    else:
+        exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
     # Plot an UMAP result of the data set
     umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
     # exp.plot_umap(complete_data_map, umap_exploration_result_path)

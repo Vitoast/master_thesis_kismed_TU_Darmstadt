@@ -37,7 +37,7 @@ classifier_colors = ['red', 'purple', 'orange', 'green', 'black', 'blue']
 #       'k_fold' for k-set cross validation
 #   For oversampling of imbalanced classes set a value.
 #       Choose 0 to not oversample or 1 to enable
-standardize, impute, filter_outliers_z_score, validation_method, oversample = True, 'mean_group', 0, 'k_fold', 1
+standardize, impute, filter_outliers_z_score, validation_method, oversample = False, 'mean_group', 0, 'k_fold', 1
 standardization_parameters = [True, False]
 imputation_parameters = ['median_std', 'mean_std', 'median_group', 'mean_group']
 max_test_threshold = 16
