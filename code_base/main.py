@@ -8,6 +8,7 @@ import preprocess_data as pre
 import classification as clf
 import feature_evaluation as fe
 import parameter_evaluation as pe
+import additional_functions as add
 
 
 def main():
@@ -20,6 +21,10 @@ def main():
     test_source_path = os.path.join(source_dir_path, test_excel_file)
     complete_source_path = os.path.join(source_dir_path, complete_excel_file)
     result_path = os.path.join(source_dir_path, "results")
+
+    additional_plots_path = os.path.join(result_path, "additional_plots")
+    # add.plot_two_gaussians(additional_plots_path)
+    # add.plot_linear_separation(additional_plots_path)
 
     # Read data from Excel file, save it in predefined split sets and the complete set
     train_data_map = read_excel.read_excel_data(train_source_path)
@@ -104,7 +109,7 @@ def main():
         # Option 2: Do only performance ablation
         # fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
         # Option 3: Do feature accumulation study
-        fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
+        # fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
         # Use this to plot former ablation studies
         # fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
 

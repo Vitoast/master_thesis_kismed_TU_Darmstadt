@@ -11,17 +11,17 @@ original_outcome_strings = []
 # Add the specific string to the general descriptor to use that block of data
 #   'PRE' for computed clinical markers before anesthesia
 #   'POST' for computed clinical markers after anesthesia
-#   'PMP' for PRE minus POST values
+#   'PMP' for absolute PRE minus POST values, only usable standalone
 #   'BEFORE' for demographic data and data collected before surgery
 #   'DURING' for data about the surgery process
 #   'AFTER' for data collected after surgery
 feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
-possible_feature_combinations = [#'PRE',
-                                 #'POST',
-                                 #'PRE_POST',
-                                 'PMP']#,
-                                 #'BEFORE_DURING',
-                                 #'PRE_POST_BEFORE_DURING',
+possible_feature_combinations = ['PRE',
+                                 'POST',
+                                 'PRE_POST',
+                                 'PMP',
+                                 'BEFORE_DURING',
+                                 'PRE_POST_BEFORE_DURING']
                                  #'PRE_POST_BEFORE_DURING_AFTER']
 
 # Uniform colors for plots of used models

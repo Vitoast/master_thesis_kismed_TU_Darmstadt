@@ -238,7 +238,7 @@ def bayesian_parameter_optimization_models(train_data_map, test_data_map, result
             # if classification_descriptor == 'DecisionTree': continue
             # if classification_descriptor == 'SVM': continue
             # if classification_descriptor == 'RandomForest': continue
-            # if classification_descriptor == 'XGBoost': continue  # FIXXX
+            # if classification_descriptor == 'XGBoost': continue
 
             # Define the hyperparameter space depending on the current model
             if classification_descriptor == 'NaiveBayes':
