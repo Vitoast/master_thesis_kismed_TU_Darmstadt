@@ -54,12 +54,14 @@ def print_feature_importances_of_forests(train_data_map, feature_importances):
 
 
 # Save results to Excel file
-def save_results_to_file(accuracy, f1_scores, result_path, classification_descriptor, parameter_descriptor):
+def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_variance, result_path, classification_descriptor, parameter_descriptor):
     os.makedirs(result_path, exist_ok=True)
     result_file = os.path.join(result_path, result_file_name)
     str_parameters = [str(num) for num in parameter_descriptor]
     str_accuracies = [str(num) for num in accuracy]
+    str_acc_variance = [str(num) for num in accuracy_variance]
     str_f1_scores = [str(num) for num in f1_scores]
+    str_f1_variance = [str(num) for num in f1_score_variance]
 
     # If the file does not exist, create it and add a first column with descriptors of the rows plus data column
     if not os.path.exists(result_file):
@@ -67,8 +69,9 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
         # f1_descriptors = [s + '_f1_score' for s in gl.outcome_descriptors]
         df = pd.DataFrame({
             'Configuration': (['Outcome', 'Classifier', 'Standardized', 'Imputer', 'Z-Score Threshold', 'Oversampling',
-                               'K-folds', 'Accuracy', 'F1-Score']),
-            classification_descriptor: (str_parameters + str_accuracies + str_f1_scores),
+                               'K-folds', 'Accuracy', 'Accuracy Variance', 'F1-Score', 'F1-Score Variance']),
+            classification_descriptor: (str_parameters + str_accuracies + str_acc_variance
+                                        + str_f1_scores + str_f1_variance),
         })
 
     # Otherwise read file only add new column
@@ -78,7 +81,7 @@ def save_results_to_file(accuracy, f1_scores, result_path, classification_descri
         if classification_descriptor not in df.columns:
             df[classification_descriptor] = pd.NA
         # Overwrite data in column
-        new_column_content = str_parameters + str_accuracies + str_f1_scores
+        new_column_content = str_parameters + str_accuracies + str_f1_scores + str_f1_variance
         df[classification_descriptor][:len(new_column_content)] = new_column_content
 
     # Write to file
@@ -128,7 +131,8 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
 
     # Save results and return accuracy
     if save_model_details:
-        save_results_to_file(accuracy_results, f1_scores, result_path, model_descriptor, parameter_descriptor)
+        # In pre split runs no variance exists
+        save_results_to_file(accuracy_results, 0, f1_scores, 0, result_path, model_descriptor, parameter_descriptor)
     return accuracy_results, f1_scores
 
 
@@ -246,8 +250,12 @@ def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classi
 
     # Save average accuracy to file
     if save_model_details:
-        save_results_to_file(np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0), result_path,
-                             model_descriptor, parameter_descriptor)
+        save_results_to_file(np.mean(accuracy_results, axis=0),
+                             np.var(accuracy_results, axis=0),
+                             np.mean(f1_score_results, axis=0),
+                             np.var(f1_score_results, axis=0),
+                             result_path, model_descriptor, parameter_descriptor)
 
-    # Return mean of accuracy and f1 score of all predictions
-    return np.mean(accuracy_results, axis=0), np.mean(f1_score_results, axis=0)
+    # Return mean of accuracy and f1 score and f1 score variance of all predictions
+    return (np.mean(accuracy_results, axis=0), np.var(accuracy_results, axis=0),
+            np.mean(f1_score_results, axis=0), np.var(f1_score_results, axis=0))

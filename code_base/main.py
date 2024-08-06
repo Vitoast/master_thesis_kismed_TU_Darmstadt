@@ -48,10 +48,10 @@ def main():
     # Explore data set, plot data distribution and get statistical metrics
     exploration_result_path = os.path.join(result_path, 'exploration_results')
     # exp.check_data_sets(train_data_map, test_data_map)
-    if gl.standardize or gl.impute:
-        exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
-    else:
-        exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
+    # if gl.standardize or gl.impute:
+    #     exp.explore_data(train_data_map, os.path.join(result_path, "standardized_exploration_results"))
+    # else:
+    #     exp.explore_data(train_data_map, os.path.join(result_path, "exploration_results"))
     # Plot an UMAP result of the data set
     umap_exploration_result_path = os.path.join(exploration_result_path, "umap_exploration_results")
     # exp.plot_umap(complete_data_map, umap_exploration_result_path)
@@ -104,23 +104,23 @@ def main():
         current_result_path = os.path.join(feature_evaluation_result_path, data_set)
         gl.feature_blocks_to_use = data_set
         # Option 1: Do combined ablation with VIF and performance
-        # fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
-        # fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
+        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
+        fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
         # Option 2: Do only performance ablation
         # fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
         # Option 3: Do feature accumulation study
-        # fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
+        fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
         # Use this to plot former ablation studies
-        # fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
+        fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
 
     # Analyse difference between PRE and POST version of the same markers
     pre_post_comparison_result_path = os.path.join(feature_evaluation_result_path, 'pre_post_comparison_results')
     # fe.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
 
     # Plot the mixed feature ablation study for the above considered subsets
-    # for test_set in gl.possible_feature_combinations:
-    #     test_files = os.path.join(feature_evaluation_result_path, test_set)
-    #     fe.plot_one_model_vif_and_performance_feature_ablation(test_files)
+    for data_set in gl.possible_feature_combinations:
+        data_files = os.path.join(feature_evaluation_result_path, data_set + '_comb')
+        fe.plot_one_model_vif_and_performance_feature_ablation(data_files)
 
 
 if __name__ == "__main__":
