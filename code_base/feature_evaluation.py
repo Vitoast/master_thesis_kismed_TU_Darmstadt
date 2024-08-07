@@ -48,24 +48,18 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
 
     # Plot a scatter plot of the data including a regression line
     for model in range(len(f1_scores_per_model)):
-        # ax.scatter(feature_counts, accuracies_per_model[model], label=classifiers[model]+'_accuracy')
-        if len(removed_features) > 50:
-            sns.regplot(x=feature_counts, y=f1_scores_per_model[model],
-                        scatter_kws={"color": gl.classifier_colors[model]},
-                        line_kws={"color": gl.classifier_colors[model]}, order=6, label=gl.classifiers[model])
+        # Plot errorbars for uncertainty of f1-scores, label variance only once
+        if model == 0:
+            plt.errorbar(x=feature_counts, y=f1_scores_per_model[model],
+                         yerr=np.array(f1_variance_per_model[model]).flatten(),
+                         fmt='none', ecolor=gl.classifier_colors[model], label='Variance in cross validation')
         else:
-            # Label variance only once
-            if model == 0:
-                plt.errorbar(x=feature_counts, y=f1_scores_per_model[model],
-                             yerr=np.array(f1_variance_per_model[model]).flatten(),
-                             fmt='none', ecolor=gl.classifier_colors[model], label='Variance in cross validation')
-            else:
-                plt.errorbar(x=feature_counts, y=f1_scores_per_model[model],
-                             yerr=np.array(f1_variance_per_model[model]).flatten(),
-                             fmt='none', ecolor=gl.classifier_colors[model])
-            # Scatter performance
-            plt.scatter(x=feature_counts, y=f1_scores_per_model[model], color=gl.classifier_colors[model],
-                        label=gl.classifiers[model])
+            plt.errorbar(x=feature_counts, y=f1_scores_per_model[model],
+                         yerr=np.array(f1_variance_per_model[model]).flatten(),
+                         fmt='none', ecolor=gl.classifier_colors[model])
+        # Plot data points
+        plt.scatter(x=feature_counts, y=f1_scores_per_model[model], color=gl.classifier_colors[model],
+                    label=gl.classifiers[model])
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 1, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -713,112 +707,3 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                                       f1_scores_per_model, f1_variance_per_model,
                                       added_features[0], outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome])
-
-
-# Analyse the difference between the PRE and POST markers
-# Models are trained with each single feature and the performance for both sets is saved in an Excel file per outcome
-def compare_pre_to_post_marker_performance(complete_data_map, result_path):
-    os.makedirs(result_path, exist_ok=True)
-    result_file_path = os.path.join(result_path, 'pre_post_single_performance.xlsx')
-
-    # Prepare data structures that hold outcomes of study
-    accuracies_per_outcome_pre, f1_scores_per_outcome_pre = pe.create_result_structure()
-    accuracy_var_per_outcome_pre, f1_score_var_per_outcome_pre = pe.create_result_structure()
-    # Prepare data structures to hold variance
-    accuracies_per_outcome_post, f1_scores_per_outcome_post = pe.create_result_structure()
-    accuracy_var_per_outcome_post, f1_score_var_per_outcome_post = pe.create_result_structure()
-
-    # Get features for both sets
-    gl.feature_blocks_to_use = 'PRE'
-    pre_marker_map = pre.filter_data_sub_sets(complete_data_map)
-    pre_marker_single_map = {}
-    gl.feature_blocks_to_use = 'POST'
-    post_marker_map = pre.filter_data_sub_sets(complete_data_map)
-    post_marker_single_map = {}
-
-    # Set global data set variable so PRE and POST does not get kicked out later
-    gl.feature_blocks_to_use = 'PRE_POST'
-
-    # Then perform classification with all given models and evaluate the performance with f1 score
-    for outcome_value in range(gl.number_outcomes):
-        result_file_path = os.path.join(result_path, gl.outcome_descriptors[outcome_value]
-                                        + '_pre_post_single_performance.xlsx')
-
-        for model in gl.classifiers:
-            for (pre_key, pre_data), (post_key, post_data) in zip(pre_marker_map.items(), post_marker_map.items()):
-
-                pre_marker_single_map[pre_key] = pre_data
-                post_marker_single_map[post_key] = post_data
-
-                # If current feature is an outcome, do not classify
-                if pre_key in gl.original_outcome_strings or post_key in gl.original_outcome_strings:
-                    continue
-
-                # Train and predict with k-fold validation for PRE
-                accuracy_results, accuracy_var, f1_scores, f1_var = clf.classify_k_fold(pre_marker_single_map,
-                                                                                        outcome_value,
-                                                                                        result_path, [],
-                                                                                        model, False, False)
-                accuracies_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
-                accuracy_var_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(accuracy_var)
-                f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_scores)
-                f1_score_var_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_var)
-
-                # Train and predict with k-fold validation for POST
-                accuracy_results, accuracy_var, f1_scores, f1_var = clf.classify_k_fold(post_marker_single_map,
-                                                                                        outcome_value,
-                                                                                        result_path, [],
-                                                                                        model, False, False)
-                accuracies_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
-                accuracy_var_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(accuracy_var)
-                f1_scores_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(f1_scores)
-                f1_score_var_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(f1_var)
-
-                # Remove feature again from trial set
-                pre_marker_single_map.pop(pre_key)
-                post_marker_single_map.pop(post_key)
-
-        # Save the results to an Excel file
-        for pre_key, post_key in zip(pre_marker_map.keys(), post_marker_map.keys()):
-
-            # Skip outcomes
-            if pre_key in gl.original_outcome_strings or post_key in gl.original_outcome_strings:
-                continue
-
-            # Extract current values of iteration from overall scores
-            temp_accuracies = []
-            for val in accuracies_per_outcome_pre[outcome_value]:
-                temp_accuracies.append(val[list(pre_marker_map.keys()).index(pre_key) - gl.number_outcomes])
-            temp_accuracy_var = []
-            for val in accuracy_var_per_outcome_pre[outcome_value]:
-                temp_accuracy_var.append(val[list(pre_marker_map.keys()).index(pre_key) - gl.number_outcomes])
-            temp_f1_scores = []
-            for val in f1_scores_per_outcome_pre[outcome_value]:
-                temp_f1_scores.append(val[list(pre_marker_map.keys()).index(pre_key) - gl.number_outcomes])
-            temp_f1_score_var = []
-            for val in f1_score_var_per_outcome_pre[outcome_value]:
-                temp_f1_score_var.append(val[list(pre_marker_map.keys()).index(pre_key) - gl.number_outcomes])
-            save_results_to_file(np.array(temp_accuracies).flatten(),
-                                 np.array(temp_accuracy_var).flatten(),
-                                 np.array(temp_f1_scores).flatten(),
-                                 np.array(temp_f1_score_var).flatten(),
-                                 result_file_path, pre_key)
-
-            # Extract current values of iteration from overall scores
-            temp_accuracies = []
-            for val in accuracies_per_outcome_post[outcome_value]:
-                temp_accuracies.append(val[list(post_marker_map.keys()).index(post_key) - gl.number_outcomes])
-            temp_accuracy_var = []
-            for val in accuracy_var_per_outcome_post[outcome_value]:
-                temp_accuracy_var.append(val[list(post_marker_map.keys()).index(post_key) - gl.number_outcomes])
-            temp_f1_scores = []
-            for val in f1_scores_per_outcome_post[outcome_value]:
-                temp_f1_scores.append(val[list(post_marker_map.keys()).index(post_key) - gl.number_outcomes])
-            temp_f1_score_var = []
-            for val in f1_score_var_per_outcome_post[outcome_value]:
-                temp_f1_score_var.append(val[list(post_marker_map.keys()).index(post_key) - gl.number_outcomes])
-            save_results_to_file(np.array(temp_accuracies).flatten(),
-                                 np.array(temp_accuracy_var).flatten(),
-                                 np.array(temp_f1_scores).flatten(),
-                                 np.array(temp_f1_score_var).flatten(),
-                                 result_file_path, pre_key)

@@ -9,6 +9,7 @@ import classification as clf
 import feature_evaluation as fe
 import parameter_evaluation as pe
 import additional_functions as add
+import data_set_evaluation as dse
 
 
 def main():
@@ -104,23 +105,27 @@ def main():
         current_result_path = os.path.join(feature_evaluation_result_path, data_set)
         gl.feature_blocks_to_use = data_set
         # Option 1: Do combined ablation with VIF and performance
-        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
-        fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
+        # fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
+        # fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
         # Option 2: Do only performance ablation
         # fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
         # Option 3: Do feature accumulation study
-        fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
+        # fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
         # Use this to plot former ablation studies
-        fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
-
-    # Analyse difference between PRE and POST version of the same markers
-    pre_post_comparison_result_path = os.path.join(feature_evaluation_result_path, 'pre_post_comparison_results')
-    # fe.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
+        # fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
 
     # Plot the mixed feature ablation study for the above considered subsets
-    for data_set in gl.possible_feature_combinations:
-        data_files = os.path.join(feature_evaluation_result_path, data_set + '_comb')
-        fe.plot_one_model_vif_and_performance_feature_ablation(data_files)
+    # for data_set in gl.possible_feature_combinations:
+    #     data_files = os.path.join(feature_evaluation_result_path, data_set + '_comb')
+    #     fe.plot_one_model_vif_and_performance_feature_ablation(data_files)
+
+    # Analyse differences between different subsets of the data
+    data_set_evalutaiton_result_path = os.path.join(result_path, "data_set_evaluation")
+    # Analyse the difference between the PRE and POST version of the same markers
+    pre_post_comparison_result_path = os.path.join(data_set_evalutaiton_result_path, 'pre_post_comparison_results')
+    # dse.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
+    # Evaluate the information gain between different subsets of the data set
+    dse.compare_subset_information_gain(complete_data_map, data_set_evalutaiton_result_path)
 
 
 if __name__ == "__main__":

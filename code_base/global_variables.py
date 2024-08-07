@@ -31,7 +31,7 @@ classifier_colors = ['red', 'purple', 'orange', 'green', 'black', 'blue']
 #   Standardization can be turned on and off with True and False
 #   For imputation a method can be chosen
 #       'mean_std', 'median_std', 'mean_group' and 'median_group'
-#   For z-score outlier filtering a threshold can be chosen
+#   For z-score outlier filtering a threshold can be chosen, pick 0 to turn off
 #       Reasonable values range from 4 to 16 times the standard deviation
 #   For validation you can choose 'hold_out' for standard 80/20 distribution,
 #       'k_fold' for k-set cross validation
