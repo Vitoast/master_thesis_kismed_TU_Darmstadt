@@ -9,6 +9,7 @@ import parameter_evaluation as pe
 import classification as clf
 import feature_evaluation as fe
 
+
 # This computes the mutual information (MI) between subsets of the data set and the whole data set
 def compare_subset_information_gain(complete_data_map, result_path):
 

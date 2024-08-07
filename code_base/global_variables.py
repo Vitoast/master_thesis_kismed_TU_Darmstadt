@@ -101,3 +101,6 @@ model_parameters = {
 
 # Threshold for variance inflation based feature ablation, usually 5 (below vif is insignificant)
 vif_threshold = 5
+
+# If this is set SHAP is used with each classification to explain the result
+explain_prediction = False

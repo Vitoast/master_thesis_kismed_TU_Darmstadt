@@ -1,5 +1,7 @@
+import joblib
 import pandas as pd
 import os
+from os.path import exists
 import numpy as np
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
@@ -13,6 +15,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 import xgboost as xgb
 from collections import Counter
+import shap
+# from alibi.explainers import KernelShap
+import matplotlib.pyplot as plt
 
 import global_variables as gl
 import preprocess_data as pre
@@ -138,6 +143,7 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
 
 def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_target_index,
                       result_path, parameter_descriptor, classification_descriptor, print_model_details=False):
+    os.makedirs(result_path, exist_ok=True)
     accuracy_results, f1_scores = [], []
     # Get model parameters for this case
     parameter_dictionary = next((value for key, value in gl.model_parameters.items() if classification_descriptor in key
@@ -172,6 +178,54 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
     # Fit model and predict on test set
     classifier.fit(np.reshape(x_train, (len(x_train[0]), len(x_train))), y_train)
     y_pred = classifier.predict(np.reshape(x_test, (len(x_test[0]), len(x_test))))
+
+    # Do SHAP explaining of results if requested
+    if gl.explain_prediction:
+
+        # Get feature descriptors without outcome
+        labels = list(train_data_map.keys())
+        for label in labels:
+            if label in gl.original_outcome_strings:
+                labels.pop(labels.index(label))
+
+        # Create a SHAP KernelExplainer for models that do not have specific SHAP explainer
+        x_train_df = pd.DataFrame(np.array(x_train).T)
+        x_test_df = pd.DataFrame(np.array(x_test).T)
+        explainer = shap.KernelExplainer(classifier.predict_proba, x_train_df)
+
+        # Calculate SHAP game values for the test set
+        # Save SHAP values to file to not lose them after run
+        shap_result_file_path = os.path.join(result_path,
+                                             f'{gl.outcome_descriptors[outcome_target_index]}_'
+                                             f'{classification_descriptor}_'
+                                             f'{gl.feature_blocks_to_use}_shap_values.joblib')
+        # If run already computed then load result
+        if exists(shap_result_file_path):
+            shap_values = joblib.load(shap_result_file_path)
+        #  Otherwise compute new
+        else:
+            shap_values = explainer.shap_values(x_test_df)
+            # Save SHAP values to file to not lose them after run
+            joblib.dump(shap_values, shap_result_file_path)
+
+        # Create a summary plot for a single class of the test set and save it
+        shap_result_plot_path = os.path.join(result_path,
+                                             f'{gl.outcome_descriptors[outcome_target_index]}_'
+                                             f'{classification_descriptor}_'
+                                             f'{gl.feature_blocks_to_use}_shap_result_summary')
+        shap_summary_values = shap_values[0]
+        shap.summary_plot(shap_summary_values, x_test, feature_names=labels, show=False)
+        plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP single class summary plot')
+        plt.tight_layout()
+        plt.savefig(shap_result_plot_path + '_single.png', bbox_inches='tight')
+        plt.close()
+
+        # Create a summary plot for a multiclass class of the test set and save it
+        shap.summary_plot(shap_values, x_test, feature_names=labels, show=False)
+        plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP multi class summary plot')
+        plt.tight_layout()
+        plt.savefig(shap_result_plot_path + '_multi.png', bbox_inches='tight')
+        plt.close()
 
     # Count the occurrences of each element in the list
     counter = Counter(y_pred)

@@ -72,12 +72,13 @@ def main():
     print_model_details = False
 
     # Option 1: Use predefined training and test sets
-    # if gl.validation_method == 'hold_out':
-    #     for outcome in range(gl.number_outcomes):
-    #         for model in gl.classifiers:
-    #             print(gl.outcome_descriptors[outcome], model)
-    #             print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
-    #                                parameter_descriptor, model, print_model_details, True))
+    for outcome in range(gl.number_outcomes):
+        for model in ['SVM']:
+            gl.explain_prediction = True
+            gl.feature_blocks_to_use = 'POST'
+            print(gl.outcome_descriptors[outcome], model)
+            print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
+                               parameter_descriptor, model, print_model_details, False))
 
     # Option 2: Use cross validation on complete set
     # if gl.validation_method == 'k_fold':
@@ -125,7 +126,7 @@ def main():
     pre_post_comparison_result_path = os.path.join(data_set_evalutaiton_result_path, 'pre_post_comparison_results')
     # dse.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
     # Evaluate the information gain between different subsets of the data set
-    dse.compare_subset_information_gain(complete_data_map, data_set_evalutaiton_result_path)
+    # dse.compare_subset_information_gain(complete_data_map, data_set_evalutaiton_result_path)
 
 
 if __name__ == "__main__":
