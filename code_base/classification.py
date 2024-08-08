@@ -16,7 +16,6 @@ from sklearn.model_selection import KFold
 import xgboost as xgb
 from collections import Counter
 import shap
-# from alibi.explainers import KernelShap
 import matplotlib.pyplot as plt
 
 import global_variables as gl
@@ -70,8 +69,6 @@ def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_varian
 
     # If the file does not exist, create it and add a first column with descriptors of the rows plus data column
     if not os.path.exists(result_file):
-        # accuracy_descriptors = [s + '_accuracy'for s in gl.outcome_descriptors]
-        # f1_descriptors = [s + '_f1_score' for s in gl.outcome_descriptors]
         df = pd.DataFrame({
             'Configuration': (['Outcome', 'Classifier', 'Standardized', 'Imputer', 'Z-Score Threshold', 'Oversampling',
                                'K-folds', 'Accuracy', 'Accuracy Variance', 'F1-Score', 'F1-Score Variance']),
@@ -86,7 +83,7 @@ def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_varian
         if classification_descriptor not in df.columns:
             df[classification_descriptor] = pd.NA
         # Overwrite data in column
-        new_column_content = str_parameters + str_accuracies + str_f1_scores + str_f1_variance
+        new_column_content = str_parameters + str_accuracies + str_acc_variance + str_f1_scores + str_f1_variance
         df[classification_descriptor][:len(new_column_content)] = new_column_content
 
     # Write to file
@@ -96,6 +93,9 @@ def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_varian
 # Classify for one outcome with a naive Bayesian classifier
 def classify(train_data_map, test_data_map, outcome_target_index, result_path, parameter_descriptor,
              classification_descriptor, print_model_details=False, save_model_details=True):
+
+    # Add subfolder for current data set and classifier
+    result_path = os.path.join(result_path, gl.feature_blocks_to_use + '_' + classification_descriptor)
 
     # Find matching configuration in precomputed data
     current_configurations = next((value for key, value in gl.preprocess_parameters.items()
@@ -137,7 +137,7 @@ def classify(train_data_map, test_data_map, outcome_target_index, result_path, p
     # Save results and return accuracy
     if save_model_details:
         # In pre split runs no variance exists
-        save_results_to_file(accuracy_results, 0, f1_scores, 0, result_path, model_descriptor, parameter_descriptor)
+        save_results_to_file(accuracy_results, [0], f1_scores, [0], result_path, model_descriptor, parameter_descriptor)
     return accuracy_results, f1_scores
 
 
@@ -215,14 +215,16 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
                                              f'{gl.feature_blocks_to_use}_shap_result_summary')
         shap_summary_values = shap_values[0]
         shap.summary_plot(shap_summary_values, x_test, feature_names=labels, show=False)
-        plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP single class summary plot')
+        plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP single class summary plot for '
+                  + classification_descriptor)
         plt.tight_layout()
         plt.savefig(shap_result_plot_path + '_single.png', bbox_inches='tight')
         plt.close()
 
         # Create a summary plot for a multiclass class of the test set and save it
         shap.summary_plot(shap_values, x_test, feature_names=labels, show=False)
-        plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP multi class summary plot')
+        plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP multi class summary plot for '
+                  + classification_descriptor)
         plt.tight_layout()
         plt.savefig(shap_result_plot_path + '_multi.png', bbox_inches='tight')
         plt.close()

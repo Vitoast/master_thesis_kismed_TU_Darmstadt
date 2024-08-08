@@ -436,9 +436,12 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
         for outcome in range(gl.number_outcomes):
 
             all_markers_in_order, all_f1_scores[outcome], all_accuracies[outcome] = [], [], []
+            all_accuracy_var[outcome], all_f1_scores_var[outcome] = [], []
             for feature_string in gl.classifiers:
-                all_f1_scores[outcome].append([])
                 all_accuracies[outcome].append([])
+                all_accuracy_var[outcome].append([])
+                all_f1_scores[outcome].append([])
+                all_f1_scores_var[outcome].append([])
 
             if not only_performance:
                 vif_file_name = 'feature_ablation_study_vif_' + gl.outcome_descriptors[outcome] + '.xlsx'
