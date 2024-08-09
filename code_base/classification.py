@@ -235,7 +235,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
     # Give back score of 0 if classifier only predicts one class (means it is not learning)
     for element, count in counter.items():
         if count == len(y_pred):
-            return [0], [0]
+            return [0.], [0.]
 
     # Compute prediction accuracy
     accuracy_results.append(accuracy_score(y_test, y_pred))
@@ -278,13 +278,12 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
 def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classification_descriptor,
                     print_model_details=False, save_model_details=True):
     # Prepare k split
-    k_fold_split = 5
-    kf = KFold(n_splits=k_fold_split, shuffle=True)
+    kf = KFold(n_splits=gl.k_fold_split, shuffle=True)
 
     # Create unique identifier for current model
     model_descriptor = ''
     parameter_descriptor = [gl.outcome_descriptors[outcome]] + [classification_descriptor] + parameter_descriptor + [
-        k_fold_split]
+        gl.k_fold_split]
     for parameter in parameter_descriptor: model_descriptor += str(parameter)
 
     # Store accuracy results here
@@ -314,4 +313,5 @@ def classify_k_fold(data_map, outcome, result_path, parameter_descriptor, classi
 
     # Return mean of accuracy and f1 score and f1 score variance of all predictions
     return (np.mean(accuracy_results, axis=0), np.var(accuracy_results, axis=0),
-            np.mean(f1_score_results, axis=0), np.var(f1_score_results, axis=0))
+            np.mean(f1_score_results, axis=0), np.var(f1_score_results, axis=0),
+            accuracy_results, f1_score_results)

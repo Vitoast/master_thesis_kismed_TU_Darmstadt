@@ -72,13 +72,13 @@ def main():
     print_model_details = False
 
     # Option 1: Use predefined training and test sets
-    for outcome in range(gl.number_outcomes):
-        for model in ['SVM']:
-            gl.explain_prediction = True
-            gl.feature_blocks_to_use = 'POST'
-            print(gl.outcome_descriptors[outcome], model)
-            print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
-                               parameter_descriptor, model, print_model_details, False))
+    # for outcome in range(gl.number_outcomes):
+    #     for model in ['NaiveBayes']:
+    #         gl.explain_prediction = True
+    #         gl.feature_blocks_to_use = 'PMP'
+    #         print(gl.outcome_descriptors[outcome], model)
+    #         print(clf.classify(train_data_map.copy(), test_data_map.copy(), outcome, classification_result_path,
+    #                            parameter_descriptor, model, print_model_details, True))
 
     # Option 2: Use cross validation on complete set
     # if gl.validation_method == 'k_fold':
@@ -121,12 +121,14 @@ def main():
     #     fe.plot_one_model_vif_and_performance_feature_ablation(data_files)
 
     # Analyse differences between different subsets of the data
-    data_set_evalutaiton_result_path = os.path.join(result_path, "data_set_evaluation")
+    data_set_evaluation_result_path = os.path.join(result_path, "data_set_evaluation")
     # Analyse the difference between the PRE and POST version of the same markers
-    pre_post_comparison_result_path = os.path.join(data_set_evalutaiton_result_path, 'pre_post_comparison_results')
+    pre_post_comparison_result_path = os.path.join(data_set_evaluation_result_path, 'pre_post_comparison_results')
     # dse.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
     # Evaluate the information gain between different subsets of the data set
-    # dse.compare_subset_information_gain(complete_data_map, data_set_evalutaiton_result_path)
+    # dse.compare_subset_information_gain(complete_data_map, data_set_evaluation_result_path)
+    # Compare the performance of different sets based on a T-test
+    dse.t_test_to_different_subsets_performance(complete_data_map, data_set_evaluation_result_path)
 
 
 if __name__ == "__main__":

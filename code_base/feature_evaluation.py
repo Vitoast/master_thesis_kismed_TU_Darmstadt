@@ -225,10 +225,11 @@ def perform_feature_ablation_study_vif(original_data_map, result_directory):
                     gl.z_score_threshold = current_configurations[2]
                     gl.oversample_rate = current_configurations[3]
                     # Train and predict with k-fold validation
-                    accuracy_results, accuracy_variance, f1_scores, f1_variance = clf.classify_k_fold(complete_data_map,
-                                                                                                      outcome_value,
-                                                                                                      result_path, [],
-                                                                                                      model, False, False)
+                    accuracy_results, accuracy_variance, f1_scores, f1_variance, tmp0, tmp1 = clf.classify_k_fold(
+                        complete_data_map,
+                        outcome_value,
+                        result_path, [],
+                        model, False, False)
                     accuracies_per_outcome[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
                     accuracy_variance_per_outcome[outcome_value][gl.classifiers.index(model)].append(accuracy_variance)
                     f1_scores_per_outcome[outcome_value][gl.classifiers.index(model)].append(f1_scores)
@@ -344,10 +345,11 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
                         reference_map.pop(feature_name)
                         removed_feature_trials.append(feature_name)
                         # Classify with the reduced set
-                        accuracy, accuracy_variance, f1_score, f1_variance = clf.classify_k_fold(reference_map, outcome,
-                                                                                                 result_path, [],
-                                                                                                 gl.classifiers[model],
-                                                                                                 False, False)
+                        accuracy, accuracy_variance, f1_score, f1_variance, tmp0, tmp1 = clf.classify_k_fold(
+                            reference_map, outcome,
+                            result_path, [],
+                            gl.classifiers[model],
+                            False, False)
                         accuracy_ablation_results.append(accuracy)
                         accuracy_variance_ablation_results.append(accuracy_variance)
                         f1_score_ablation_results.append(f1_score)
@@ -456,7 +458,6 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
                 all_f1_scores[outcome] = f1_scores
                 all_f1_scores_var[outcome] = f1_score_variance
 
-
             performance_file_name = gl.outcome_descriptors[outcome] + '_' + model + '_ablation_study_performance.txt'
             performance_file_path = os.path.join(result_directory, performance_file_name)
 
@@ -498,7 +499,8 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
             if outcome == 0:
                 plt.errorbar(x=feature_counts, y=all_f1_scores[outcome][gl.classifiers.index(model)],
                              yerr=all_f1_scores_var[outcome][gl.classifiers.index(model)],
-                             ecolor=gl.classifier_colors[outcome], fmt='none', label='Variance in cross validation', zorder=1)
+                             ecolor=gl.classifier_colors[outcome], fmt='none', label='Variance in cross validation',
+                             zorder=1)
             else:
                 plt.errorbar(x=feature_counts, y=all_f1_scores[outcome][gl.classifiers.index(model)],
                              yerr=all_f1_scores_var[outcome][gl.classifiers.index(model)],
@@ -584,10 +586,12 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                         added_feature_trials.append(feature_name)
 
                         # Classify with the reduced set
-                        accuracy, acc_variance, f1_score, f1_variance = clf.classify_k_fold(reduced_map, outcome,
-                                                                                            result_path, [],
-                                                                                            gl.classifiers[model],
-                                                                                            False, False)
+                        accuracy, acc_variance, f1_score, f1_variance, tmp0, tmp1 = clf.classify_k_fold(reduced_map,
+                                                                                                        outcome,
+                                                                                                        result_path, [],
+                                                                                                        gl.classifiers[
+                                                                                                            model],
+                                                                                                        False, False)
                         accuracy_accumulation_results.append(accuracy[0])
                         accuracy_variance_accumulation_results.append(acc_variance[0])
                         f1_score_accumulation_results.append(f1_score[0])
@@ -613,7 +617,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                     stats_file.write(f"{best_feature},"
                                      f"{accuracy_accumulation_results[best_feature_idx]},"
                                      f"{accuracy_variance_accumulation_results[best_feature_idx]},"
-                                     f"{f1_score_accumulation_results[best_feature_idx]},"                        
+                                     f"{f1_score_accumulation_results[best_feature_idx]},"
                                      f"{f1_variance_accumulation_results[best_feature_idx]},\n")
                     print('Feature', best_feature, 'added for', gl.outcome_descriptors[outcome],
                           gl.classifiers[model], 'with F1-Score', f1_score_accumulation_results[best_feature_idx])
@@ -623,7 +627,8 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                         # Sort the f1-scores descending and reorder the accuracies accordingly
                         sorted_indices = np.argsort(f1_score_accumulation_results)[::-1]
                         accuracy_accumulation_results = [accuracy_accumulation_results[i] for i in sorted_indices]
-                        accuracy_variance_accumulation_results = [accuracy_variance_accumulation_results[i] for i in sorted_indices]
+                        accuracy_variance_accumulation_results = [accuracy_variance_accumulation_results[i] for i in
+                                                                  sorted_indices]
                         f1_score_accumulation_results = [f1_score_accumulation_results[i] for i in sorted_indices]
                         f1_variance_accumulation_results = [f1_variance_accumulation_results[i] for i in sorted_indices]
                         marker_names_sorted = [added_feature_trials[i] for i in sorted_indices]
@@ -699,7 +704,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                                                                 + gl.classifiers[model] + "_single_performance.txt")
                         with open(single_results_file_path, 'w') as res_file:
                             for ordered_feature in range(len(marker_names_sorted)):
-                                res_file.write(f"{marker_names_sorted[ordered_feature]},"                                               
+                                res_file.write(f"{marker_names_sorted[ordered_feature]},"
                                                f"{accuracy_accumulation_results[ordered_feature]},"
                                                f"{accuracy_variance_accumulation_results[ordered_feature]}"
                                                f"{f1_score_accumulation_results[ordered_feature]},"

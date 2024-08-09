@@ -43,8 +43,11 @@ imputation_parameters = ['median_std', 'mean_std', 'median_group', 'mean_group']
 max_test_threshold = 16
 min_test_threshold = 4
 filter_outliers_parameters = range(min_test_threshold, max_test_threshold)
-oversampling_parameters = [1, 0]
 # HINT: When facing problems with oversampling see that package threadpoolctl is properly installed
+oversampling_parameters = [1, 0]
+
+# Define how many splits in CV should be used
+k_fold_split = 5
 
 # Parameter combinations for preprocessing to be the best for each outcome and model combination (precomputed)
 preprocess_parameters = {

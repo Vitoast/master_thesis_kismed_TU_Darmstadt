@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from sklearn.feature_selection import mutual_info_classif
+from scipy import stats
 
 import global_variables as gl
 import preprocess_data as pre
@@ -12,7 +13,6 @@ import feature_evaluation as fe
 
 # This computes the mutual information (MI) between subsets of the data set and the whole data set
 def compare_subset_information_gain(complete_data_map, result_path):
-
     mutual_info_gains = []
 
     # Calculate MI for each outcome
@@ -97,20 +97,22 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                     continue
 
                 # Train and predict with k-fold validation for PRE
-                accuracy_results, accuracy_var, f1_scores, f1_var = clf.classify_k_fold(pre_marker_single_map,
-                                                                                        outcome_value,
-                                                                                        result_path, [],
-                                                                                        model, False, False)
+                accuracy_results, accuracy_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(
+                    pre_marker_single_map,
+                    outcome_value,
+                    result_path, [],
+                    model, False, False)
                 accuracies_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
                 accuracy_var_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(accuracy_var)
                 f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_scores)
                 f1_score_var_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_var)
 
                 # Train and predict with k-fold validation for POST
-                accuracy_results, accuracy_var, f1_scores, f1_var = clf.classify_k_fold(post_marker_single_map,
-                                                                                        outcome_value,
-                                                                                        result_path, [],
-                                                                                        model, False, False)
+                accuracy_results, accuracy_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(
+                    post_marker_single_map,
+                    outcome_value,
+                    result_path, [],
+                    model, False, False)
                 accuracies_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(accuracy_results)
                 accuracy_var_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(accuracy_var)
                 f1_scores_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(f1_scores)
@@ -164,3 +166,43 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                                     np.array(temp_f1_scores).flatten(),
                                     np.array(temp_f1_score_var).flatten(),
                                     result_file_path, pre_key)
+
+
+# Compute T-Test for performance comparison of each sensible subset combination
+def t_test_to_different_subsets_performance(complete_data_map, result_path):
+    # All subsets that should be compared
+    combinations_to_test = [['PRE', 'POST'],
+                            ['PRE', 'PMP'],
+                            ['POST', 'PMP'],
+                            ['PRE_POST', 'BEFORE_AFTER'],
+                            ['PRE_POST', 'PRE_POST_BEFORE_AFTER'],
+                            ['BEFORE_AFTER', 'PRE_POST_BEFORE_AFTER']]
+
+    # Use 10-fold cross validation here
+    gl.k_fold_split = 10
+
+    # Do it for all outcomes and classifiers
+    for outcome_index in range(gl.number_outcomes):
+        for classification_descriptor in gl.classifiers:
+            for combination in combinations_to_test:
+                f1_results = []
+                f1_means = []
+                for data_set in combination:
+                    gl.feature_blocks_to_use = data_set
+                    # Get the F1-Score of the classification for the set-classifier-outcome combination
+                    tmp0, tmp1, f1_mean, tmp4, tmp5, f1_scores = clf.classify_k_fold(complete_data_map,
+                                                                                     outcome_index,
+                                                                                     result_path,
+                                                                                     [],
+                                                                                     classification_descriptor,
+                                                                                     False, False)
+                    f1_results.append(f1_scores)
+                    f1_means.append(f1_mean[0])
+
+                # Compute the t-test values
+                t, p = stats.ttest_rel(f1_results[0], f1_results[1], axis=0)
+
+                # Output the t-test results
+                print(f'CV T-Test result for {gl.outcome_descriptors[outcome_index]} '
+                      f'with {classification_descriptor} and sets {combination}\n'
+                      f'F1 set 0: {f1_means[0]}, F1 set 1: {f1_means[1]}, t: {t}, p: {p}\n')

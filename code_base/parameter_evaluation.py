@@ -69,8 +69,10 @@ def find_best_oversampling(data_map, result_path):
             # Try for each model separately
             for model in gl.classifiers:
                 parameter_descriptor = [gl.standardize, gl.impute, gl.filter_outliers_z_score, oversampling_rate]
-                accuracy, f1_scores = clf.classify_k_fold(data_map, outcome_value, save_result_path,
-                                                          parameter_descriptor, model, False, True)
+                accuracy, acc_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(data_map, outcome_value,
+                                                                                       save_result_path,
+                                                                                       parameter_descriptor, model,
+                                                                                       False, True)
                 accuracy_results[outcome_value][gl.classifiers.index(model)].append(accuracy)
                 f1_score_results[outcome_value][gl.classifiers.index(model)].append(f1_scores)
 
@@ -99,8 +101,10 @@ def find_best_imputation(data_map, result_path):
         for model in gl.classifiers:
             for outcome_value in range(gl.number_outcomes):
                 parameter_descriptor = [gl.standardize, parameter, gl.filter_outliers_z_score]
-                accuracy, f1_scores = clf.classify_k_fold(data_map, outcome_value, result_path,
-                                                          parameter_descriptor, model, False, True)
+                accuracy, acc_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(data_map, outcome_value,
+                                                                                       result_path,
+                                                                                       parameter_descriptor, model,
+                                                                                       False, True)
                 accuracy_results[outcome_value][gl.classifiers.index(model)].append(accuracy)
                 f1_score_results[outcome_value][gl.classifiers.index(model)].append(f1_scores)
 
@@ -121,8 +125,10 @@ def find_best_z_score_filter(data_map, result_path):
         for test_z in range(gl.min_test_threshold, gl.max_test_threshold):
             parameter_descriptor = [True, gl.imputation_parameters[2], test_z]
             for outcome_value in range(gl.number_outcomes):
-                accuracy, f1_scores = clf.classify_k_fold(data_map, outcome_value, result_path,
-                                                          parameter_descriptor, model, False, True)
+                accuracy, acc_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(data_map, outcome_value,
+                                                                                       result_path,
+                                                                                       parameter_descriptor, model,
+                                                                                       False, True)
                 accuracy_results[outcome_value][gl.classifiers.index(model)].append(accuracy)
                 f1_score_results[outcome_value][gl.classifiers.index(model)].append(f1_scores)
 
