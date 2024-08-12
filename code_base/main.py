@@ -32,6 +32,12 @@ def main():
     test_data_map = read_excel.read_excel_data(test_source_path)
     complete_data_map = read_excel.read_excel_data(complete_source_path)
 
+    # Remove Or-combination of outcomes if not relevant
+    if 'Any' not in gl.outcome_descriptors:
+        train_data_map.pop('Any_adverse_outcome')
+        test_data_map.pop('Any_adverse_outcome')
+        complete_data_map.pop('Any_adverse_outcome')
+
     # Initialize the descriptors of the adverse outcomes
     for feature_name, feature_data in list(complete_data_map.items())[1:6]:
         gl.original_outcome_strings.append(feature_name)
@@ -73,7 +79,7 @@ def main():
 
     # Option 1: Use predefined training and test sets
     # for outcome in range(gl.number_outcomes):
-    #     for model in ['NaiveBayes']:
+    #     for model in gl.classifiers:
     #         gl.explain_prediction = True
     #         gl.feature_blocks_to_use = 'PMP'
     #         print(gl.outcome_descriptors[outcome], model)
@@ -87,6 +93,17 @@ def main():
     #             print(gl.outcome_descriptors[outcome], model)
     #             print(clf.classify_k_fold(complete_data_map.copy(), outcome, classification_result_path,
     #                                 parameter_descriptor, model, print_model_details, True))
+
+    # Analyse differences between different subsets of the data
+    gl.scale_bad_performance_results = False
+    data_set_evaluation_result_path = os.path.join(result_path, "data_set_evaluation")
+    # Analyse the difference between the PRE and POST version of the same markers
+    pre_post_comparison_result_path = os.path.join(data_set_evaluation_result_path, 'pre_post_comparison_results')
+    dse.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
+    # Evaluate the information gain between different subsets of the data set
+    # dse.compare_subset_information_gain(complete_data_map, data_set_evaluation_result_path)
+    # Compare the performance of different sets based on a T-test
+    # dse.t_test_to_different_subsets_performance(complete_data_map, data_set_evaluation_result_path)
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
@@ -106,29 +123,15 @@ def main():
         current_result_path = os.path.join(feature_evaluation_result_path, data_set)
         gl.feature_blocks_to_use = data_set
         # Option 1: Do combined ablation with VIF and performance
-        # fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
-        # fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
+        fe.perform_feature_ablation_study_vif(complete_data_map, current_result_path + '_comb')
+        fe.continue_performance_ablation_after_vif(current_result_path + '_comb', "", complete_data_map)
         # Option 2: Do only performance ablation
         # fe.perform_feature_ablation_study_performance(complete_data_map, current_result_path + '_perf')
         # Option 3: Do feature accumulation study
-        # fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
-        # Use this to plot former ablation studies
+        fe.perform_feature_accumulation(complete_data_map, current_result_path + '_acc')
+        # Use this to plot former ablation studies, once for combined and once for performance only
+        fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_comb', False)
         # fe.plot_one_model_vif_and_performance_feature_ablation(current_result_path + '_perf', True)
-
-    # Plot the mixed feature ablation study for the above considered subsets
-    # for data_set in gl.possible_feature_combinations:
-    #     data_files = os.path.join(feature_evaluation_result_path, data_set + '_comb')
-    #     fe.plot_one_model_vif_and_performance_feature_ablation(data_files)
-
-    # Analyse differences between different subsets of the data
-    data_set_evaluation_result_path = os.path.join(result_path, "data_set_evaluation")
-    # Analyse the difference between the PRE and POST version of the same markers
-    pre_post_comparison_result_path = os.path.join(data_set_evaluation_result_path, 'pre_post_comparison_results')
-    # dse.compare_pre_to_post_marker_performance(complete_data_map, pre_post_comparison_result_path)
-    # Evaluate the information gain between different subsets of the data set
-    # dse.compare_subset_information_gain(complete_data_map, data_set_evaluation_result_path)
-    # Compare the performance of different sets based on a T-test
-    dse.t_test_to_different_subsets_performance(complete_data_map, data_set_evaluation_result_path)
 
 
 if __name__ == "__main__":

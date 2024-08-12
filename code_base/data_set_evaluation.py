@@ -19,40 +19,42 @@ def compare_subset_information_gain(complete_data_map, result_path):
     for outcome_target_index in range(gl.number_outcomes):
 
         # Preprocess combined data set to get reference
-        gl.feature_blocks_to_use = 'PRE_POST_BEFORE_DURING'
-        preprocessed_complete_set = pre.preprocess_data(complete_data_map, complete_data_map,
-                                                        outcome_target_index,
-                                                        standardize=True,
-                                                        z_score_threshold=0,
-                                                        oversample_rate=0)[0]
-        # Delete target field of outcome, save it and convert remaining set to panda DF
-        target_values = pd.DataFrame(preprocessed_complete_set.pop(gl.original_outcome_strings[outcome_target_index]))
-        preprocessed_complete_set_df = pd.DataFrame(preprocessed_complete_set)
+        for sets in gl.combinations_to_test:
+            # Preprocess first set
+            gl.feature_blocks_to_use = sets[0]
+            preprocessed_set0 = pre.preprocess_data(complete_data_map, complete_data_map,
+                                                    outcome_target_index,
+                                                    standardize=True,
+                                                    z_score_threshold=0,
+                                                    oversample_rate=0)[0]
+            # Delete target field of outcome, save it and convert remaining set to panda DF
+            target_values = pd.DataFrame(preprocessed_set0.pop(gl.original_outcome_strings[outcome_target_index]))
+            preprocessed_set0_df = pd.DataFrame(preprocessed_set0)
 
-        # Consider PRE and POST markers against BEFORE and DURING features
-        for current_subset in ['PRE_POST', 'BEFORE_DURING']:
-            gl.feature_blocks_to_use = current_subset
+            # Preprocess second set
+            gl.feature_blocks_to_use = sets[1]
             # Preprocess data with scaling and imputation
-            preprocessed_subset = pre.preprocess_data(complete_data_map, complete_data_map,
-                                                      outcome_target_index,
-                                                      standardize=True,
-                                                      impute='median_group',
-                                                      z_score_threshold=0,
-                                                      oversample_rate=0)[0]
+            preprocessed_set1 = pre.preprocess_data(complete_data_map, complete_data_map,
+                                                    outcome_target_index,
+                                                    standardize=True,
+                                                    impute='median_group',
+                                                    z_score_threshold=0,
+                                                    oversample_rate=0)[0]
             # Delete target field of outcome and convert to panda df
-            preprocessed_subset.pop(gl.original_outcome_strings[outcome_target_index])
-            preprocessed_subset_df = pd.DataFrame(preprocessed_subset)
+            preprocessed_set1.pop(gl.original_outcome_strings[outcome_target_index])
+            preprocessed_set1_df = pd.DataFrame(preprocessed_set1)
 
             # Compute MI for each set and then the difference as gain
-            mutual_info_complete_set = mutual_info_classif(preprocessed_complete_set_df, target_values)
-            mutual_info_subset = mutual_info_classif(preprocessed_subset_df, target_values)
-            mutual_info_gain = np.sum(mutual_info_complete_set) - np.sum(mutual_info_subset)
+            mutual_info_set0 = mutual_info_classif(preprocessed_set0_df, target_values)
+            mutual_info_set1 = mutual_info_classif(preprocessed_set1_df, target_values)
+            mutual_info_gain = np.sum(mutual_info_set1) - np.sum(mutual_info_set0)
             mutual_info_gains.append(mutual_info_gain)
 
+            # Print out results
             print(f'{gl.outcome_descriptors[outcome_target_index]} conditional mutual information (CMI)\n'
-                  f'MI: complete set to outcome: {np.sum(mutual_info_complete_set)}\n'
-                  f'MI: contribution subset {current_subset} to outcome: {np.sum(mutual_info_subset)}\n'
-                  f'CMI: contribution other subset to complete set: {mutual_info_gain}\n')
+                  f'MI: contribution subset {sets[0]} to outcome: {np.sum(mutual_info_set0)}\n'
+                  f'MI: contribution subset {sets[1]} to outcome: {np.sum(mutual_info_set1)}\n'
+                  f'CMI: contribution of set {sets[0]} to {sets[1]}: {mutual_info_gain}\n')
 
     return mutual_info_gains
 
@@ -165,26 +167,20 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                                     np.array(temp_accuracy_var).flatten(),
                                     np.array(temp_f1_scores).flatten(),
                                     np.array(temp_f1_score_var).flatten(),
-                                    result_file_path, pre_key)
+                                    result_file_path, post_key)
 
 
 # Compute T-Test for performance comparison of each sensible subset combination
 def t_test_to_different_subsets_performance(complete_data_map, result_path):
     # All subsets that should be compared
-    combinations_to_test = [['PRE', 'POST'],
-                            ['PRE', 'PMP'],
-                            ['POST', 'PMP'],
-                            ['PRE_POST', 'BEFORE_AFTER'],
-                            ['PRE_POST', 'PRE_POST_BEFORE_AFTER'],
-                            ['BEFORE_AFTER', 'PRE_POST_BEFORE_AFTER']]
 
     # Use 10-fold cross validation here
-    gl.k_fold_split = 10
+    gl.k_fold_split = 5
 
     # Do it for all outcomes and classifiers
     for outcome_index in range(gl.number_outcomes):
         for classification_descriptor in gl.classifiers:
-            for combination in combinations_to_test:
+            for combination in gl.combinations_to_test:
                 f1_results = []
                 f1_means = []
                 for data_set in combination:
@@ -202,7 +198,8 @@ def t_test_to_different_subsets_performance(complete_data_map, result_path):
                 # Compute the t-test values
                 t, p = stats.ttest_rel(f1_results[0], f1_results[1], axis=0)
 
-                # Output the t-test results
-                print(f'CV T-Test result for {gl.outcome_descriptors[outcome_index]} '
-                      f'with {classification_descriptor} and sets {combination}\n'
-                      f'F1 set 0: {f1_means[0]}, F1 set 1: {f1_means[1]}, t: {t}, p: {p}\n')
+                # Output the significant t-test results
+                if p < 0.05:
+                    print(f'CV T-Test result for {gl.outcome_descriptors[outcome_index]} '
+                          f'with {classification_descriptor} and sets {combination}\n'
+                          f'F1 set 0: {f1_means[0]}, F1 set 1: {f1_means[1]}, t: {t}, p: {p}\n')

@@ -512,7 +512,7 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
         box = ax.get_position()
         # Add vertical line to represent transition between VIF and performance
         if not only_performance:
-            plt.axvline(x=vif_border, color='red', linestyle='--', linewidth=2,
+            plt.axvline(x=vif_border, color='black', linestyle='--', linewidth=2,
                         label='Threshold between VIF\nand performance ablation')
             plt.title('Combined VIF and performance feature ablation study plot for ' + model)
         else:

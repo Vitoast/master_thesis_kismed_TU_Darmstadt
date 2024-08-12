@@ -233,9 +233,10 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
     counter = Counter(y_pred)
 
     # Give back score of 0 if classifier only predicts one class (means it is not learning)
-    for element, count in counter.items():
-        if count == len(y_pred):
-            return [0.], [0.]
+    if gl.scale_bad_performance_results:
+        for element, count in counter.items():
+            if count == len(y_pred):
+                return [0.], [0.]
 
     # Compute prediction accuracy
     accuracy_results.append(accuracy_score(y_test, y_pred))

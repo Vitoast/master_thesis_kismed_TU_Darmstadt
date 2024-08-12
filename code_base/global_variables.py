@@ -2,7 +2,7 @@
 # Only the two best performing are used in the final version, uncomment the rest to use them
 classifiers = ['NaiveBayes', 'SVM']#, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
-outcome_descriptors = ["AKD", "AKI1", "LCOS", "AF", "Any"]
+outcome_descriptors = ["AKD", "AKI1", "LCOS", "AF"]#, "Any"]
 number_outcomes = len(outcome_descriptors)
 # List used to save complete descriptors of adverse outcomes in data
 original_outcome_strings = []
@@ -16,6 +16,7 @@ original_outcome_strings = []
 #   'DURING' for data about the surgery process
 #   'AFTER' for data collected after surgery
 feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
+# Subsets that make sense to split fomr the data set
 possible_feature_combinations = ['PRE',
                                  'POST',
                                  'PRE_POST',
@@ -23,6 +24,13 @@ possible_feature_combinations = ['PRE',
                                  'BEFORE_DURING',
                                  'PRE_POST_BEFORE_DURING']
                                  #'PRE_POST_BEFORE_DURING_AFTER']
+# These are the combinations of subsets that should be compared
+combinations_to_test = [['PRE', 'POST'],
+                        ['PRE', 'PMP'],
+                        ['POST', 'PMP'],
+                        ['PRE_POST', 'BEFORE_DURING'],
+                        ['PRE_POST', 'PRE_POST_BEFORE_DURING'],
+                        ['BEFORE_DURING', 'PRE_POST_BEFORE_DURING']]
 
 # Uniform colors for plots of used models
 classifier_colors = ['red', 'purple', 'orange', 'green', 'black', 'blue']
@@ -107,3 +115,7 @@ vif_threshold = 5
 
 # If this is set SHAP is used with each classification to explain the result
 explain_prediction = False
+
+# This is used to tell the classification if a feature study or a statistical test is performed
+# In feature study a not learning model has to be punished more
+scale_bad_performance_results = True
