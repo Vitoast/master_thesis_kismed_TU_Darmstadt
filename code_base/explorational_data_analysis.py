@@ -41,7 +41,9 @@ def explore_data(data_dictionary, output_directory):
                 for outcome in range(gl.number_outcomes):
                     # Clean data from nan
                     # Create the cleaned data by filtering out NaN values
-                    cleaned_data = [(x, label) for x, label in zip(feature_data, data_dictionary[gl.original_outcome_strings[outcome]]) if not np.isnan(x)]
+                    cleaned_data = [(x, label) for x, label in
+                                    zip(feature_data, data_dictionary[gl.original_outcome_strings[outcome]]) if
+                                    not np.isnan(x)]
 
                     # Unpack the cleaned data into separate arrays
                     cleaned_x_values, cleaned_labels = zip(*cleaned_data)
@@ -90,9 +92,11 @@ def explore_data(data_dictionary, output_directory):
                         plt.tight_layout()
 
                         if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
-                            output_file_path = os.path.join(clinical_marker_directory, f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
+                            output_file_path = os.path.join(clinical_marker_directory,
+                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
                         else:
-                            output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
+                            output_file_path = os.path.join(clinical_data_directory,
+                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
 
                             # Save plot as PNG file
                     plt.savefig(output_file_path)
@@ -151,7 +155,8 @@ def plot_umap(data_dictionary, output_directory):
     for n_neighbors in n_neighbors_range:
         for min_dist in min_dist_range:
 
-            current_output_directory = os.path.join(output_directory, 'Test_' + str(n_neighbors_range.index(n_neighbors))
+            current_output_directory = os.path.join(output_directory,
+                                                    'Test_' + str(n_neighbors_range.index(n_neighbors))
                                                     + '_' + str(min_dist_range.index(min_dist)))
             os.makedirs(current_output_directory, exist_ok=True)
 
@@ -211,10 +216,27 @@ def plot_umap(data_dictionary, output_directory):
             # Plot UMAP for all outcomes
             result_path = os.path.join(current_output_directory, f'umap_of_all_outcomes')
 
+            # Define which class combinations are occurring in the data set
+            classes = ['No adverse event',
+                       'Only AKD',
+                       'Only AF',
+                       'AKD and LCOS',
+                       'AKD and AF',
+                       'AKI1 and AF',
+                       'AKD, LCOS and AF',
+                       'AKI1, LCOS and AF']
+            # Map the computed scalars to the class combinations
+            # (This is done to not plot not existing combinations in the legend)
+            class_mapping = {0: 0, 1: 1, 4: 2, 5: 3, 9: 4, 11: 5, 13: 6, 15: 7}
             # Scalar values for each outcome to distinguish overlapping classes
-            scalars = np.array([0, 1, 4, 8])
+            scalars = np.array([1, 2, 4, 8])
             # Sum the scaled outcomes to distinguish between combinations of outcomes
             y_tmp = np.sum(scalar * array for scalar, array in zip(scalars, np.array(y_data_per_outcome)))
+            y_scaled = []
+            # Map values to indices of class descriptors
+            for y_val in y_tmp[0]:
+                y_scaled.append(class_mapping[y_val])
+
             # Calculate and plot umap
             reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist)
             embedding = reducer.fit_transform(np.reshape(x_data_per_outcome[0],
@@ -222,28 +244,10 @@ def plot_umap(data_dictionary, output_directory):
                                                           len(x_data_per_outcome[0]))))
             # Plot
             fig, ax = plt.subplots(1, figsize=(8, 6))
-            plt.scatter(*embedding.T, s=40, c=y_tmp, cmap='nipy_spectral', alpha=1.0)
+            plt.scatter(*embedding.T, s=40, c=y_scaled, cmap='nipy_spectral', alpha=1.0)
             plt.setp(ax, xticks=[], yticks=[])
-            cbar = plt.colorbar(boundaries=np.arange(14) - 0.5)
-            cbar.set_ticks(np.arange(13))
-            classes = ['No adverse event',
-                       'Only ' + gl.outcome_descriptors[0],
-                       'Only ' + gl.outcome_descriptors[1],
-                       gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[1],
-                       'Only ' + gl.outcome_descriptors[2],
-                       gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[2],
-                       gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
-                       gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[2],
-                       'Only ' + gl.outcome_descriptors[3],
-                       gl.outcome_descriptors[0] + ' and ' + gl.outcome_descriptors[3],
-                       gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
-                       gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3],
-                       gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
-                       gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ' and ' + gl.outcome_descriptors[3]]
-            # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
-            # gl.outcome_descriptors[1] + ', ' + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3],
-            # gl.outcome_descriptors[0] + ', ' + gl.outcome_descriptors[1] + ', '
-            # + gl.outcome_descriptors[2] + ' and ' + gl.outcome_descriptors[3]]
+            cbar = plt.colorbar(boundaries=np.arange(9) - 0.5)
+            cbar.set_ticks(np.arange(9))
             cbar.set_ticklabels(classes)
             plt.title('UMAP visualization of all outcomes and their combinations')
             plt.tight_layout()
