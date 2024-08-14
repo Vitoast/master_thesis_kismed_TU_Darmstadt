@@ -13,48 +13,55 @@ import feature_evaluation as fe
 
 # This computes the mutual information (MI) between subsets of the data set and the whole data set
 def compare_subset_information_gain(complete_data_map, result_path):
+    os.makedirs(result_path, exist_ok=True)
+
     mutual_info_gains = []
 
     # Calculate MI for each outcome
     for outcome_target_index in range(gl.number_outcomes):
 
-        # Preprocess combined data set to get reference
+        # Create a DataFrame for storing results
+        df = pd.DataFrame({'Outcome': ['Set 0', 'MI set 0', 'Set 1', 'MI set 1', 'Comb set', 'MI gain sets']})
+
+        # Loop through each combination of feature sets to test
         for sets in gl.combinations_to_test:
-            # Preprocess first set
-            gl.feature_blocks_to_use = sets[0]
-            preprocessed_set0 = pre.preprocess_data(complete_data_map, complete_data_map,
-                                                    outcome_target_index,
-                                                    standardize=True,
-                                                    z_score_threshold=0,
-                                                    oversample_rate=0)[0]
-            # Delete target field of outcome, save it and convert remaining set to panda DF
-            target_values = pd.DataFrame(preprocessed_set0.pop(gl.original_outcome_strings[outcome_target_index]))
-            preprocessed_set0_df = pd.DataFrame(preprocessed_set0)
+            def preprocess_and_extract_target(features):
+                gl.feature_blocks_to_use = features
+                preprocessed_set = pre.preprocess_data(complete_data_map, complete_data_map, outcome_target_index,
+                                                       standardize=True, z_score_threshold=0, oversample_rate=0)[0]
+                target_values = pd.DataFrame(preprocessed_set.pop(gl.original_outcome_strings[outcome_target_index]))
+                return pd.DataFrame(preprocessed_set), target_values
 
-            # Preprocess second set
-            gl.feature_blocks_to_use = sets[1]
-            # Preprocess data with scaling and imputation
-            preprocessed_set1 = pre.preprocess_data(complete_data_map, complete_data_map,
-                                                    outcome_target_index,
-                                                    standardize=True,
-                                                    impute='median_group',
-                                                    z_score_threshold=0,
-                                                    oversample_rate=0)[0]
-            # Delete target field of outcome and convert to panda df
-            preprocessed_set1.pop(gl.original_outcome_strings[outcome_target_index])
-            preprocessed_set1_df = pd.DataFrame(preprocessed_set1)
+            # Preprocess the two sets
+            preprocessed_set0_df, target_values_df = preprocess_and_extract_target(sets[0])
+            preprocessed_set1_df, _ = preprocess_and_extract_target(sets[1])
 
-            # Compute MI for each set and then the difference as gain
-            mutual_info_set0 = mutual_info_classif(preprocessed_set0_df, target_values)
-            mutual_info_set1 = mutual_info_classif(preprocessed_set1_df, target_values)
-            mutual_info_gain = np.sum(mutual_info_set1) - np.sum(mutual_info_set0)
+            # Compute mutual information for both sets
+            mutual_info_set0 = np.sum(mutual_info_classif(preprocessed_set0_df, target_values_df.values.ravel()))
+            mutual_info_set1 = np.sum(mutual_info_classif(preprocessed_set1_df, target_values_df.values.ravel()))
+
+            # Calculate mutual information gain
+            mutual_info_gain = mutual_info_set1 - mutual_info_set0
             mutual_info_gains.append(mutual_info_gain)
 
-            # Print out results
-            print(f'{gl.outcome_descriptors[outcome_target_index]} conditional mutual information (CMI)\n'
-                  f'MI: contribution subset {sets[0]} to outcome: {np.sum(mutual_info_set0)}\n'
-                  f'MI: contribution subset {sets[1]} to outcome: {np.sum(mutual_info_set1)}\n'
-                  f'CMI: contribution of set {sets[0]} to {sets[1]}: {mutual_info_gain}\n')
+            # Log the results
+            # print(f'{gl.outcome_descriptors[outcome_target_index]} conditional mutual information (CMI)\n'
+            #       f'MI: contribution subset {sets[0]} to outcome: {mutual_info_set0}\n'
+            #       f'MI: contribution subset {sets[1]} to outcome: {mutual_info_set1}\n'
+            #       f'CMI: gain of set {sets[1]} to {sets[0]}: {mutual_info_gain}\n')
+
+            # Add results to the DataFrame
+            column_descriptor = f'{sets[0]}_and_{sets[1]}'
+            new_column = [
+                f'{sets[0]}_MI', str(mutual_info_set0), f'{sets[1]}_MI', str(mutual_info_set1),
+                'Gain', str(mutual_info_gain)
+            ]
+            df[column_descriptor] = new_column
+
+        # Write DataFrame to an Excel file
+        result_file = os.path.join(result_path,
+                                   f'mutual_information_gain_{gl.outcome_descriptors[outcome_target_index]}.xlsx')
+        df.to_excel(result_file, index=False)
 
     return mutual_info_gains
 

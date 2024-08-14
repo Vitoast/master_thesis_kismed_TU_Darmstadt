@@ -25,10 +25,10 @@ possible_feature_combinations = ['PRE',
                                  'PRE_POST_BEFORE_DURING']
                                  #'PRE_POST_BEFORE_DURING_AFTER']
 # These are the combinations of subsets that should be compared
-combinations_to_test = [['PRE', 'POST'],
-                        ['PRE', 'PMP'],
-                        ['POST', 'PMP'],
-                        ['PRE_POST', 'BEFORE_DURING'],
+combinations_to_test = [['PRE', 'PRE_POST'],
+                        ['POST', 'PRE_POST'],
+                        ['PRE', 'PRE_PMP'],
+                        ['POST', 'POST_PMP'],
                         ['PRE_POST', 'PRE_POST_BEFORE_DURING'],
                         ['BEFORE_DURING', 'PRE_POST_BEFORE_DURING']]
 
