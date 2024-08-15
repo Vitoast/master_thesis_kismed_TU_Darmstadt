@@ -59,7 +59,7 @@ k_fold_split = 5
 
 # Parameter combinations for preprocessing to be the best for each outcome and model combination (precomputed)
 preprocess_parameters = {
-    'AKD,NaiveBayes': [False, 'mean_std', 6, 0],
+    'AKD,NaiveBayes': [True, 'mean_std', 6, 0],
     'AKD,LogisticRegression': [True, 'mean_std', 10, 1],
     'AKD,DecisionTree': [False, 'mean_group', 11, 1],
     'AKD,SVM': [True, 'mean_std', 10, 1],
@@ -71,7 +71,7 @@ preprocess_parameters = {
     'AKI1,SVM': [True, 'mean_group', 13, 1],
     'AKI1,RandomForest': [True, 'median_std', 10, 0],
     'AKI1,XGBoost': [True, 'mean_std', 11, 0],
-    'LCOS,NaiveBayes': [False, 'mean_std', 15, 1],
+    'LCOS,NaiveBayes': [True, 'mean_std', 15, 1],
     'LCOS,LogisticRegression': [False, 'mean_std', 16, 0],
     'LCOS,DecisionTree': [False, 'median_std', 16, 0],
     'LCOS,SVM': [False, 'median_group', 11, 1],
