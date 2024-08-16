@@ -16,11 +16,11 @@ original_outcome_strings = []
 #   'DURING' for data about the surgery process
 #   'AFTER' for data collected after surgery
 feature_blocks_to_use = 'PRE_POST_BEFORE_DURING_AFTER'
-# Subsets that make sense to split fomr the data set
+# Subsets that make sense to split from the data set
 possible_feature_combinations = ['PRE',
                                  'POST',
                                  'PRE_POST',
-                                 'PMP',
+                                 #'PMP',
                                  'BEFORE_DURING',
                                  'PRE_POST_BEFORE_DURING']
                                  #'PRE_POST_BEFORE_DURING_AFTER']
@@ -74,7 +74,7 @@ preprocess_parameters = {
     'LCOS,NaiveBayes': [True, 'mean_std', 15, 1],
     'LCOS,LogisticRegression': [False, 'mean_std', 16, 0],
     'LCOS,DecisionTree': [False, 'median_std', 16, 0],
-    'LCOS,SVM': [False, 'median_group', 11, 1],
+    'LCOS,SVM': [True, 'median_group', 11, 1],
     'LCOS,RandomForest': [False, 'mean_std', 16, 1],
     'LCOS,XGBoost': [False, 'median_std', 5, 1],
     'AF,NaiveBayes': [True, 'median_std', 10, 0],
@@ -104,7 +104,7 @@ model_parameters = {
                  'probability': True, 'shrinking': False, 'tol': 0.0001},
     'LCOS,SVM': {'C': 1, 'class_weight': 'balanced', 'coef0': 0.1, 'degree': 5, 'kernel': 'sigmoid',
                  'probability': True, 'shrinking': False, 'tol': 0.0001},
-    'AF,SVM': {'C': 100, 'class_weight': None, 'coef0': 0.0, 'degree': 2, 'kernel': 'poly',
+    'AF,SVM': {'C': 1, 'class_weight': None, 'coef0': 0.0, 'degree': 2, 'kernel': 'poly',
                'probability': True, 'shrinking': True, 'tol': 0.001},
     'Any,SVM': {'C': 0.1, 'class_weight': None, 'coef0': 0.1, 'degree': 5, 'kernel': 'sigmoid',
                 'probability': True, 'shrinking': False, 'tol': 0.01},

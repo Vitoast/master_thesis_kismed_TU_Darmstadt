@@ -41,10 +41,15 @@ def save_results_to_file(accuracies, accuracy_variance, f1_scores, f1_score_vari
 def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
                                   f1_scores_per_model, f1_variance_per_model,
                                   removed_features, result_path,
-                                  outcome_descriptor):
+                                  outcome_descriptor, study_type='ablation'):
     plt.figure(figsize=(12, 6))
     ax = plt.subplot(111)
-    feature_counts = list(range(len(removed_features), 0, -1))
+
+    # Differentiate between ablation and accumulation regarding plotting order (left to right, right to left) of points
+    if study_type == 'ablation':
+        feature_counts = list(range(len(removed_features), 0, -1))
+    else:
+        feature_counts = list(range(len(removed_features)))
 
     # Plot a scatter plot of the data including a regression line
     for model in range(len(f1_scores_per_model)):
@@ -63,8 +68,8 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 1, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    plt.title('Feature ablation study plot for ' + outcome_descriptor)
-    plt.xlabel('Number of features left')
+    plt.title(f'Feature {study_type} study plot for ' + outcome_descriptor)
+    plt.xlabel('Current number of features')
     plt.ylabel('F1 score')
     plt.grid(True)
     plt.tight_layout()
@@ -327,7 +332,11 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
             with open(stats_file_path, 'w') as stats_file:
 
                 # Perform feature elimination and classification until only a few features are left
-                for feature_count in range(0, len(complete_data_map.keys()) - gl.number_outcomes):
+                for feature_count in range(len(complete_data_map.keys()) - gl.number_outcomes, 0, -1):
+                    # Skip last iteration bc training on empty set is useless
+                    if feature_count < 2:
+                        break
+
                     removed_feature_trials = []
                     accuracy_ablation_results = []
                     accuracy_variance_ablation_results = []
@@ -358,6 +367,8 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
                         reference_map[feature_name] = feature_data
 
                     # Extract feature whose deletion leads to the biggest performance gain
+                    if len(f1_score_ablation_results) == 0:
+                        print(feature_count)
                     worst_feature_idx = f1_score_ablation_results.index(max(f1_score_ablation_results))
                     worst_feature = removed_feature_trials[worst_feature_idx]
                     # Save performance of classification after feature is deleted
@@ -565,7 +576,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
 
                 # Perform feature accumulation until total of 10 features,
                 # above there was no performance gain in earlier evaluations
-                for feature_count in range(0, 10):
+                for feature_count in range(0, 20):
                     added_feature_trials = []
                     accuracy_accumulation_results = []
                     accuracy_variance_accumulation_results = []
@@ -714,4 +725,4 @@ def perform_feature_accumulation(complete_data_map, result_directory):
         plot_feature_ablation_results(accuracies_per_model, accuracy_variance_per_model,
                                       f1_scores_per_model, f1_variance_per_model,
                                       added_features[0], outcome_result_paths[outcome] + '_plot',
-                                      gl.outcome_descriptors[outcome])
+                                      gl.outcome_descriptors[outcome], 'accumulation')
