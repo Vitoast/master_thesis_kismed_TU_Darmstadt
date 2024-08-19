@@ -42,14 +42,16 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
                                   f1_scores_per_model, f1_variance_per_model,
                                   removed_features, result_path,
                                   outcome_descriptor, study_type='ablation'):
-    plt.figure(figsize=(12, 6))
-    ax = plt.subplot(111)
 
     # Differentiate between ablation and accumulation regarding plotting order (left to right, right to left) of points
     if study_type == 'ablation':
         feature_counts = list(range(len(removed_features), 0, -1))
+        plt.figure(figsize=(12, 6))
     else:
         feature_counts = list(range(len(removed_features)))
+        plt.figure(figsize=(7, 6))
+
+    ax = plt.subplot(111)
 
     # Plot a scatter plot of the data including a regression line
     for model in range(len(f1_scores_per_model)):
@@ -57,7 +59,7 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
         if model == 0:
             plt.errorbar(x=feature_counts, y=f1_scores_per_model[model],
                          yerr=np.array(f1_variance_per_model[model]).flatten(),
-                         fmt='none', ecolor=gl.classifier_colors[model], label='Variance in cross validation')
+                         fmt='none', ecolor=gl.classifier_colors[model], label='Variance in CV')
         else:
             plt.errorbar(x=feature_counts, y=f1_scores_per_model[model],
                          yerr=np.array(f1_variance_per_model[model]).flatten(),

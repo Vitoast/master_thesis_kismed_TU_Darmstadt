@@ -207,11 +207,17 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
             shap_values = explainer.shap_values(x_test_df)
             # Save SHAP values to file to not lose them after run
             joblib.dump(shap_values, shap_result_file_path)
-            # Save resulting SHapley values to a CSV file
-            shap_values_df = pd.DataFrame(shap_values, columns=labels)
-            shap_values_df.to_csv(f'{gl.outcome_descriptors[outcome_target_index]}_'
-                                  f'{classification_descriptor}_'
-                                  f'{gl.feature_blocks_to_use}_shap_values.csv', index=False)
+        # Save resulting SHapley values to a CSV file, therefore sum them and write to file
+        shap_values_sum = []
+        for class_values in shap_values:
+            shap_values_sum.append(np.mean(np.abs(class_values), axis=0))
+        shap_values_sum0 = np.sum(np.array(shap_values_sum), axis=0)
+        shap_values_csv_path = os.path.join(result_path, f'{gl.outcome_descriptors[outcome_target_index]}_'
+                                                         f'{classification_descriptor}_'
+                                                         f'{gl.feature_blocks_to_use}_shap_values.csv')
+        with open(shap_values_csv_path, 'w') as file_to_write:
+            for label, shap_v in zip(labels, shap_values_sum0):
+                file_to_write.write(f"{label},{shap_v}\n")
 
         # Create a summary plot for a single class of the test set and save it
         shap_result_plot_path = os.path.join(result_path,
