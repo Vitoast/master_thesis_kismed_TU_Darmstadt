@@ -44,12 +44,6 @@ def compare_subset_information_gain(complete_data_map, result_path):
             mutual_info_gain = mutual_info_set1 - mutual_info_set0
             mutual_info_gains.append(mutual_info_gain)
 
-            # Log the results
-            # print(f'{gl.outcome_descriptors[outcome_target_index]} conditional mutual information (CMI)\n'
-            #       f'MI: contribution subset {sets[0]} to outcome: {mutual_info_set0}\n'
-            #       f'MI: contribution subset {sets[1]} to outcome: {mutual_info_set1}\n'
-            #       f'CMI: gain of set {sets[1]} to {sets[0]}: {mutual_info_gain}\n')
-
             # Add results to the DataFrame
             column_descriptor = f'{sets[0]}_and_{sets[1]}'
             new_column = [

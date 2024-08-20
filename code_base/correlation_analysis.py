@@ -130,6 +130,55 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
     save_feature_importance(sorted_features, correlation_coefficients, p_values, output_directory)
 
 
+# Compute the correlation between all features and return significant results (corr > 0.7, p-value < 0.05)
+def compute_feature_collinearity(data_dictionary, result_path):
+    # Only take predictive values in data set and save former config for later restoration
+    former_data_set = gl.feature_blocks_to_use
+    gl.feature_blocks_to_use = 'PRE_POST_BEFORE_DURING'
+    data_dictionary = pre.filter_data_sub_sets(data_dictionary)
+    test_data_dictionary = data_dictionary.copy()
+
+    marker_names, marker_data = [], []
+    correlation_pairs, correlation_values = [], []
+
+    # Filter markers based on their belonging to POST or PRE
+    feature_count = 0
+    for feature_name, feature_data in data_dictionary.items():
+        # Check if the feature data contains only numeric values
+        if all(isinstance(x, (int, float)) for x in feature_data):
+            if feature_count < gl.number_outcomes:
+                feature_count += 1
+            else:
+                marker_names.append(feature_name)
+                marker_data.append(feature_data)
+
+    # Iterate over each marker of the whole set
+    for marker_a in list(data_dictionary.keys()):
+        # Remove the current marker from the test set so no double computations occur
+        test_data_dictionary.pop(marker_a)
+        # Iterate over each remaining marker
+        for marker_b in list(test_data_dictionary.keys()):
+            # Find indices where either array1 or array2 is NaN
+            nan_indices = np.logical_or(np.isnan(data_dictionary[marker_a]), np.isnan(data_dictionary[marker_b]))
+            # Remove entries at nan_indices from both arrays
+            markers_cleaned, outcomes_cleaned = [], []
+            for nan_index in range(len(nan_indices)):
+                if not nan_indices[nan_index]:
+                    markers_cleaned.append(data_dictionary[marker_a][nan_index])
+                    outcomes_cleaned.append(data_dictionary[marker_b][nan_index])
+            # Compute point-biserial correlation for the marker pair
+            point_biserial_corr, p_value = stats.pointbiserialr(markers_cleaned, outcomes_cleaned)
+            # If correlation is high and significant then save result
+            if point_biserial_corr > 0.7 and p_value < 0.05:
+                correlation_pairs.append([marker_a, marker_b])
+                correlation_values.append([point_biserial_corr, p_value])
+                print(marker_a, marker_b, point_biserial_corr, p_value)
+
+    # Restore data set and return results
+    gl.feature_blocks_to_use = former_data_set
+    return correlation_pairs, correlation_values
+
+
 # Compute and plot the correlation matrix of all PRE- and POST-surgery markers
 def compute_marker_correlation_matrix(data_dictionary, output_directory):
     marker_names, marker_data = [], []
