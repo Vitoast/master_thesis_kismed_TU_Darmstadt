@@ -48,7 +48,7 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
         feature_counts = list(range(len(removed_features), 0, -1))
         plt.figure(figsize=(12, 6))
     else:
-        feature_counts = list(range(len(removed_features)))
+        feature_counts = list(range(1, len(removed_features) + 1))
         plt.figure(figsize=(7, 5))
 
     ax = plt.subplot(111)
@@ -70,10 +70,14 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 1, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    if study_type == 'accumulation':
+        # Show grid line every second integer
+        ax.set_xticks(np.arange(1, 21, step=1), minor=True)
+        ax.set_xticks(np.arange(1, 21, step=2), minor=False)
     plt.title(f'Feature {study_type} study plot for ' + outcome_descriptor)
     plt.xlabel('Current number of features')
     plt.ylabel('F1 score')
-    plt.grid(True)
+    plt.grid(True, which='major')
     plt.tight_layout()
     plt.savefig(result_path)
     plt.close()
@@ -447,7 +451,7 @@ def plot_former_feature_ablation(result_directory, is_ablation=True):
                                       all_f1_scores[outcome],
                                       all_f1_scores_var[outcome],
                                       markers,
-                                      outcome_result_paths[outcome] + '_replot',
+                                      outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome],
                                       study_type='accumulation')
 
