@@ -58,7 +58,8 @@ def print_feature_importances_of_forests(train_data_map, feature_importances):
 
 
 # Save results to Excel file
-def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_variance, result_path, classification_descriptor, parameter_descriptor):
+def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_variance, result_path,
+                         classification_descriptor, parameter_descriptor):
     os.makedirs(result_path, exist_ok=True)
     result_file = os.path.join(result_path, result_file_name)
     str_parameters = [str(num) for num in parameter_descriptor]
@@ -93,7 +94,6 @@ def save_results_to_file(accuracy, accuracy_variance, f1_scores, f1_score_varian
 # Classify for one outcome with a naive Bayesian classifier
 def classify(train_data_map, test_data_map, outcome_target_index, result_path, parameter_descriptor,
              classification_descriptor, print_model_details=False, save_model_details=True):
-
     # Add subfolder for current data set and classifier
     result_path = os.path.join(result_path, gl.feature_blocks_to_use + '_' + classification_descriptor)
 
@@ -207,6 +207,17 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
             shap_values = explainer.shap_values(x_test_df)
             # Save SHAP values to file to not lose them after run
             joblib.dump(shap_values, shap_result_file_path)
+        # Save resulting SHapley values to a CSV file, therefore sum them and write to file
+        shap_values_sum = []
+        for class_values in shap_values:
+            shap_values_sum.append(np.mean(np.abs(class_values), axis=0))
+        shap_values_sum0 = np.sum(np.array(shap_values_sum), axis=0)
+        shap_values_csv_path = os.path.join(result_path, f'{gl.outcome_descriptors[outcome_target_index]}_'
+                                                         f'{classification_descriptor}_'
+                                                         f'{gl.feature_blocks_to_use}_shap_values.csv')
+        with open(shap_values_csv_path, 'w') as file_to_write:
+            for label, shap_v in zip(labels, shap_values_sum0):
+                file_to_write.write(f"{label},{shap_v}\n")
 
         # Create a summary plot for a single class of the test set and save it
         shap_result_plot_path = os.path.join(result_path,
@@ -214,7 +225,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
                                              f'{classification_descriptor}_'
                                              f'{gl.feature_blocks_to_use}_shap_result_summary')
         shap_summary_values = shap_values[0]
-        shap.summary_plot(shap_summary_values, x_test, feature_names=labels, show=False)
+        shap.summary_plot(shap_summary_values, x_test, feature_names=labels, show=False, max_display=10, cmap='viridis')
         plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP single class summary plot for '
                   + classification_descriptor)
         plt.tight_layout()
@@ -222,7 +233,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
         plt.close()
 
         # Create a summary plot for a multiclass class of the test set and save it
-        shap.summary_plot(shap_values, x_test, feature_names=labels, show=False)
+        shap.summary_plot(shap_values, x_test, feature_names=labels, show=False, max_display=10, cmap='viridis')
         plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP multi class summary plot for '
                   + classification_descriptor)
         plt.tight_layout()

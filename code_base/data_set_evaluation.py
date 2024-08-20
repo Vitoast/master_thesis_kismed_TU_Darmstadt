@@ -64,7 +64,6 @@ def compare_subset_information_gain(complete_data_map, result_path):
 # Models are trained with each single feature and the performance for both sets is saved in an Excel file per outcome
 def compare_pre_to_post_marker_performance(complete_data_map, result_path):
     os.makedirs(result_path, exist_ok=True)
-    result_file_path = os.path.join(result_path, 'pre_post_single_performance.xlsx')
 
     # Prepare data structures that hold outcomes of study
     accuracies_per_outcome_pre, f1_scores_per_outcome_pre = pe.create_result_structure()
@@ -72,6 +71,8 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
     # Prepare data structures to hold variance
     accuracies_per_outcome_post, f1_scores_per_outcome_post = pe.create_result_structure()
     accuracy_var_per_outcome_post, f1_score_var_per_outcome_post = pe.create_result_structure()
+    # Prepare dat structure for ttest values
+    complete_f1_values_pre, complete_f1_values_post = pe.create_result_structure()
 
     # Get features for both sets
     gl.feature_blocks_to_use = 'PRE'
@@ -100,7 +101,7 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                     continue
 
                 # Train and predict with k-fold validation for PRE
-                accuracy_results, accuracy_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(
+                accuracy_results, accuracy_var, f1_scores, f1_var, acc_values, f1_values = clf.classify_k_fold(
                     pre_marker_single_map,
                     outcome_value,
                     result_path, [],
@@ -109,9 +110,10 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                 accuracy_var_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(accuracy_var)
                 f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_scores)
                 f1_score_var_per_outcome_pre[outcome_value][gl.classifiers.index(model)].append(f1_var)
+                complete_f1_values_pre[outcome_value][gl.classifiers.index(model)].append(f1_values)
 
                 # Train and predict with k-fold validation for POST
-                accuracy_results, accuracy_var, f1_scores, f1_var, tmp0, tmp1 = clf.classify_k_fold(
+                accuracy_results, accuracy_var, f1_scores, f1_var, acc_values, f1_values = clf.classify_k_fold(
                     post_marker_single_map,
                     outcome_value,
                     result_path, [],
@@ -120,12 +122,13 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                 accuracy_var_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(accuracy_var)
                 f1_scores_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(f1_scores)
                 f1_score_var_per_outcome_post[outcome_value][gl.classifiers.index(model)].append(f1_var)
+                complete_f1_values_post[outcome_value][gl.classifiers.index(model)].append(f1_values)
 
                 # Remove feature again from trial set
                 pre_marker_single_map.pop(pre_key)
                 post_marker_single_map.pop(post_key)
 
-        # Save the results to an Excel file
+        # Save the results to a files
         for pre_key, post_key in zip(pre_marker_map.keys(), post_marker_map.keys()):
 
             # Skip outcomes
@@ -169,6 +172,37 @@ def compare_pre_to_post_marker_performance(complete_data_map, result_path):
                                     np.array(temp_f1_scores).flatten(),
                                     np.array(temp_f1_score_var).flatten(),
                                     result_file_path, post_key)
+
+        # Perform t-test to see if a marker is significantly better in PRE or POST
+        for model in gl.classifiers:
+            stats_file_path = os.path.join(result_path, gl.outcome_descriptors[outcome_value] + '_'
+                                           + model
+                                           + '_t_test_single_performance.csv')
+            with open(stats_file_path, mode='w', newline='') as csvfile:
+                for pre_key, post_key, i in zip(pre_marker_map.keys(), post_marker_map.keys(),
+                                                range(0, len(pre_marker_map.keys()) - gl.number_outcomes - 1)):
+
+                    # Skip outcomes
+                    if pre_key in gl.original_outcome_strings or post_key in gl.original_outcome_strings:
+                        continue
+
+                    # Perform t-test
+                    t_value, p_value = stats.ttest_rel(
+                        np.array(complete_f1_values_pre[outcome_value][gl.classifiers.index(model)][i]).flatten(),
+                        np.array(complete_f1_values_post[outcome_value][gl.classifiers.index(model)][i]).flatten(),
+                        axis=0)
+
+                    # Only save significant results
+                    if p_value < 0.05:
+                        higher_value = max(f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)][i],
+                                           f1_scores_per_outcome_post[outcome_value][gl.classifiers.index(model)][i])
+                        dif_value = f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)
+                                    ][i] - f1_scores_per_outcome_post[outcome_value][gl.classifiers.index(model)][i]
+                        if higher_value == f1_scores_per_outcome_pre[outcome_value][gl.classifiers.index(model)][i]:
+                            key = pre_key
+                        else:
+                            key = post_key
+                        csvfile.write(f'{key}, {higher_value}, {dif_value}, {t_value}, {p_value}\n')
 
 
 # Compute T-Test for performance comparison of each sensible subset combination
