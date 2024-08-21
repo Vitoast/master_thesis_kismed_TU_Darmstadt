@@ -48,8 +48,8 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
         feature_counts = list(range(len(removed_features), 0, -1))
         plt.figure(figsize=(12, 6))
     else:
-        feature_counts = list(range(len(removed_features)))
-        plt.figure(figsize=(7, 6))
+        feature_counts = list(range(1, len(removed_features) + 1))
+        plt.figure(figsize=(7, 5))
 
     ax = plt.subplot(111)
 
@@ -70,10 +70,14 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 1, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    if study_type == 'accumulation':
+        # Show grid line every second integer
+        ax.set_xticks(np.arange(1, 21, step=1), minor=True)
+        ax.set_xticks(np.arange(1, 21, step=2), minor=False)
     plt.title(f'Feature {study_type} study plot for ' + outcome_descriptor)
     plt.xlabel('Current number of features')
     plt.ylabel('F1 score')
-    plt.grid(True)
+    plt.grid(True, which='major')
     plt.tight_layout()
     plt.savefig(result_path)
     plt.close()
@@ -402,22 +406,36 @@ def perform_feature_ablation_study_performance(complete_data_map, result_directo
 
 
 # Read the saved SCV file from a performance ablation study and plot the results
-def plot_former_feature_ablation(result_directory):
+def plot_former_feature_ablation(result_directory, is_ablation=True):
     all_f1_scores, all_accuracies = pe.create_result_structure()
     all_accuracy_var, all_f1_scores_var = pe.create_result_structure()
     os.makedirs(result_directory, exist_ok=True)
-    result_file_name = "feature_ablation_study_performance"
-    result_path = os.path.join(result_directory, result_file_name)
-    outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
+
+    # Differentiate between saving to ablation or accumulation files
+    if is_ablation:
+        result_file_name = "feature_ablation_study_performance"
+        result_path = os.path.join(result_directory, result_file_name)
+        outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
+    else:
+        result_file_name = "feature_accumulation_study"
+        result_path = os.path.join(result_directory, result_file_name)
+        outcome_result_paths = [result_path + '_' + key for key in gl.outcome_descriptors]
 
     # Create a plot for each outcome
     for outcome in range(gl.number_outcomes):
         markers = []
         # Load results for each model
         for model in range(len(gl.classifiers)):
-            stats_file_path = os.path.join(result_directory,
-                                           gl.outcome_descriptors[outcome] + '_'
-                                           + gl.classifiers[model] + "_ablation_study_performance.txt")
+            # Differentiate between reading an ablation or accumulation file
+            if is_ablation:
+                stats_file_path = os.path.join(result_directory,
+                                               gl.outcome_descriptors[outcome] + '_'
+                                               + gl.classifiers[model] + "_ablation_study_performance.txt")
+            else:
+                stats_file_path = os.path.join(result_directory,
+                                               gl.outcome_descriptors[outcome] + '_'
+                                               + gl.classifiers[model] + "_accumulation_study.txt")
+
             markers, accuracies, accuracy_variance, f1_scores, f1_variance = (
                 read_feature_ablation_csv_file_performance(stats_file_path))
             all_accuracies[outcome][model] = accuracies
@@ -433,8 +451,9 @@ def plot_former_feature_ablation(result_directory):
                                       all_f1_scores[outcome],
                                       all_f1_scores_var[outcome],
                                       markers,
-                                      outcome_result_paths[outcome] + '_replot',
-                                      gl.outcome_descriptors[outcome])
+                                      outcome_result_paths[outcome] + '_plot',
+                                      gl.outcome_descriptors[outcome],
+                                      study_type='accumulation')
 
 
 # In case of combined feature ablation of VIF and performance use this to plot the results of each model
