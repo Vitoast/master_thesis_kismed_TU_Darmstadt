@@ -215,9 +215,29 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
         shap_values_csv_path = os.path.join(result_path, f'{gl.outcome_descriptors[outcome_target_index]}_'
                                                          f'{classification_descriptor}_'
                                                          f'{gl.feature_blocks_to_use}_shap_values.csv')
+
+        # Variables to sum up all Shap values related to a specific subset feature
+        pre_markers_shap_sum, post_markers_shap_sum, bef_dur_shap_sum = 0, 0, 0
+
+        # Save results to CSV file
         with open(shap_values_csv_path, 'w') as file_to_write:
             for label, shap_v in zip(labels, shap_values_sum0):
                 file_to_write.write(f"{label},{shap_v}\n")
+                # Sum up values for each subset
+                if 'PRE' in label:
+                    pre_markers_shap_sum += shap_v
+                elif 'POST' in label:
+                    post_markers_shap_sum += shap_v
+                else:
+                    bef_dur_shap_sum += shap_v
+
+        # Print out sums if correct set is configured
+        if gl.feature_blocks_to_use == 'PRE_POST':
+            print(f'{gl.outcome_descriptors[outcome_target_index]} with PRE sum of Shapley values:', pre_markers_shap_sum)
+            print(f'{gl.outcome_descriptors[outcome_target_index]} with POST sum of Shapley values:', post_markers_shap_sum)
+        if gl.feature_blocks_to_use == 'PRE_POST_BEFORE_DURING':
+            print(f'{gl.outcome_descriptors[outcome_target_index]} with PRE POST sum of Shapley values:', pre_markers_shap_sum + post_markers_shap_sum)
+            print(f'{gl.outcome_descriptors[outcome_target_index]} with BEFORE DURING sum of Shapley values:', bef_dur_shap_sum)
 
         # Create a summary plot for a single class of the test set and save it
         shap_result_plot_path = os.path.join(result_path,
