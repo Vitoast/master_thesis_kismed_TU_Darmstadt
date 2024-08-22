@@ -79,7 +79,7 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
     plt.ylabel('F1 score')
     plt.grid(True, which='major')
     plt.tight_layout()
-    plt.savefig(result_path)
+    plt.savefig(result_path, format='svg')
     plt.close()
 
 
@@ -518,7 +518,7 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
                     all_f1_scores[outcome][i] = f1_scores
                     all_f1_scores_var[outcome][i] = f1_score_variance
 
-        plot_save_name = os.path.join(plot_save_directory, 'combined_ablation_plot_' + model + '.png')
+        plot_save_name = os.path.join(plot_save_directory, 'combined_ablation_plot_' + model + '.svg')
 
         # Start plotting of the results
         plt.figure(figsize=(12, 6))
@@ -555,7 +555,7 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
         plt.ylabel('F1 score')
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(plot_save_name)
+        plt.savefig(plot_save_name, format='svg')
         plt.close()
 
 
@@ -726,8 +726,8 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                         # Save plot as PNG file
                         output_file_path = os.path.join(result_directory,
                                                         f'single_feature_performance_study_'
-                                                        f'{gl.outcome_descriptors[outcome]}_{gl.classifiers[model]}.jpg')
-                        plt.savefig(output_file_path)
+                                                        f'{gl.outcome_descriptors[outcome]}_{gl.classifiers[model]}.svg')
+                        plt.savefig(output_file_path, format='svg')
                         plt.close()
 
                         # Save F1-Scores and accuracies for each single feature

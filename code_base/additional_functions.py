@@ -21,7 +21,7 @@ def plot_two_gaussians(result_path):
     plt.ylabel('Probability Density')
     plt.legend()
     plt.title('Two Gaussian Distributions with Decision Boundary')
-    plt.savefig(os.path.join(result_path, "gaussian_db_example.png"))
+    plt.savefig(os.path.join(result_path, "gaussian_db_example.svg"), format='svg')
 
 
 # Example plot to explain linear regression, includes two scattered classes and boundary
@@ -39,7 +39,7 @@ def plot_linear_separation(result_path):
     plt.ylabel('Feature 2')
     plt.title('Linearly Separable Classes with Possible Decision Boundary')
     plt.legend(loc='lower right')
-    plt.savefig(os.path.join(result_path, "linear_reg_example.png"))
+    plt.savefig(os.path.join(result_path, "linear_reg_example.svg"), format='svg')
 
 
 # Create a file containing latex tables for read in CSV files
@@ -122,3 +122,36 @@ def generate_latex_table(csv_files, output_file):
             # Create output
             output.write("\n".join(table_str))
             output.write("\n\n")
+
+
+def create_latex_for_accumulation():
+    input_files = [
+        r'D:\thesis kram\PRE_POST_acc\AKD_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\AKD_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\AKI1_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\AKI1_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\LCOS_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\LCOS_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\AF_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_acc\AF_SVM_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\AKD_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\AKD_SVM_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\AKI1_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\AKI1_SVM_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\LCOS_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\LCOS_SVM_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\AF_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\BEFORE_DURING_acc\AF_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\AKD_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\AKD_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\AKI1_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\AKI1_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\LCOS_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\LCOS_SVM_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\AF_NaiveBayes_accumulation_study.txt',
+        r'D:\thesis kram\PRE_POST_BEFORE_DURING_acc\AF_SVM_accumulation_study.txt',
+    ]
+    output_file = os.path.join(os.getcwd(), "results")
+    output_file = os.path.join(output_file, "feature_evaluation_results", "accumulation_tables_latex.txt")
+
+    generate_latex_table(input_files, output_file)

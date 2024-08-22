@@ -93,13 +93,13 @@ def explore_data(data_dictionary, output_directory):
 
                         if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
                             output_file_path = os.path.join(clinical_marker_directory,
-                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
+                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.svg')
                         else:
                             output_file_path = os.path.join(clinical_data_directory,
-                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.png')
+                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.svg')
 
-                            # Save plot as PNG file
-                    plt.savefig(output_file_path)
+                    # Save plot as svg file
+                    plt.savefig(output_file_path, format='svg')
                     plt.close()
                     feature_count += 1
 
@@ -177,7 +177,7 @@ def plot_umap(data_dictionary, output_directory):
                 cbar.set_ticklabels(classes)
                 plt.title(gl.outcome_descriptors[outcome] + ' UMAP visualization')
                 plt.tight_layout()
-                plt.savefig(result_path)
+                plt.savefig(result_path, format='svg')
                 plt.close()
 
             # Plot umap of each combination of outcomes
@@ -210,7 +210,7 @@ def plot_umap(data_dictionary, output_directory):
                     plt.title(gl.outcome_descriptors[outcome_a] + ' and ' + gl.outcome_descriptors[outcome_b]
                               + ' UMAP visualization')
                     plt.tight_layout()
-                    plt.savefig(result_path)
+                    plt.savefig(result_path, format='svg')
                     plt.close()
 
             # Plot UMAP for all outcomes
@@ -251,5 +251,5 @@ def plot_umap(data_dictionary, output_directory):
             cbar.set_ticklabels(classes)
             plt.title('UMAP visualization of all outcomes and their combinations')
             plt.tight_layout()
-            plt.savefig(result_path)
+            plt.savefig(result_path, format='svg')
             plt.close()
