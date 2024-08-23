@@ -50,56 +50,63 @@ def explore_data(data_dictionary, output_directory):
 
                     cleaned_feature_name = clean_feature_name(feature_name)
 
-                    classification = all(x in [0, 1] for x in cleaned_data)
+                    classification = all(x in [0, 1] for x in cleaned_x_values)
+
+                    data_frame = pd.DataFrame({
+                        'Value': np.array(cleaned_x_values),
+                        'Outcome (1=yes)': np.array(cleaned_labels)
+                    })
 
                     # Determine subfolder based on feature name
                     if classification:
-                        counts = Counter(cleaned_data)
+                        counts = Counter(cleaned_x_values)
                         labels = ['No', 'Yes']
                         sizes = [counts[0], counts[1]]
 
                         # Creating the pie chart
-                        plt.figure(figsize=(8, 5))
-                        plt.bar(labels, sizes, color=['green', 'red'])
-                        plt.xlabel('Outcome')
-                        plt.ylabel('Occurences')
 
-                        if feature_count < gl.number_outcomes:
-                            plt.title(f'Ratio of {gl.outcome_descriptors[feature_count]}')
+                        if feature_name in gl.original_outcome_strings:
+                            plt.figure(figsize=(3, 5))
+                            plt.bar(labels, sizes, color=['blue', 'red'])
+                            plt.xlabel('Outcome')
+                            plt.ylabel('Occurences')
+                            plt.title(f'Ratio of {gl.outcome_descriptors[gl.original_outcome_strings.index(feature_name)]}')
 
-                            output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.png')
+                            output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.pdf')
                         else:
+                            plt.figure(figsize=(6, 4))
+                            sns.countplot(data=data_frame, x='Value', hue='Outcome (1=yes)')
                             plt.title(f'Ratio of {feature_name}')
-                            output_file_path = os.path.join(clinical_data_directory, f'bar_{cleaned_feature_name}.png')
+                            plt.xlabel('Outcome')
+                            plt.ylabel('Occurences')
+                            output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}.pdf')
 
                     else:
                         plt.figure(figsize=(8, 4))
 
-                        data_frame = pd.DataFrame({
-                            'Value': np.array(cleaned_x_values),
-                            'Outcome (1=yes)': np.array(cleaned_labels)
-                        })
-
                         # Create histograms using seaborn
-                        sns.histplot(data=data_frame, x='Value', hue='Outcome (1=yes)', multiple='dodge', bins=40,
-                                     kde=True, edgecolor='black', alpha=0.5)
+                        # sns.histplot(data=data_frame, x='Value', hue='Outcome (1=yes)', multiple='dodge', bins=40,
+                        #              kde=True, edgecolor='black', alpha=0.5)
+                        sns.kdeplot(data=data_frame, x='Value', hue='Outcome (1=yes)', shade=True, bw_adjust=0.5)
+                        sns.rugplot(data=data_frame, x='Value', hue='Outcome (1=yes)', height=0.075, lw=2)
 
                         # sns.histplot(cleaned_data, bins=20, kde=True, color='green', edgecolor='black')
-                        plt.title(f'Histogram of feature {feature_name} for outcome {gl.outcome_descriptors[outcome]}')
-                        plt.xlabel('Value')
-                        plt.ylabel('Occurrences')
+                        plt.title(f'KDE and Rug plot of feature {feature_name} for outcome {gl.outcome_descriptors[outcome]}')
+                        plt.xlabel('Feature value and occurrences')
+                        plt.ylabel('KDE')
                         plt.grid(True)
                         plt.tight_layout()
 
                         if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
                             output_file_path = os.path.join(clinical_marker_directory,
-                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.svg')
+                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.pdf')
                         else:
                             output_file_path = os.path.join(clinical_data_directory,
-                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.svg')
+                                                            f'hist_{cleaned_feature_name}_{gl.outcome_descriptors[outcome]}.pdf')
 
-                    # Save plot as svg file
-                    plt.savefig(output_file_path, format='svg')
+                    # Save plot as pdf file
+                    plt.tight_layout()
+                    plt.savefig(output_file_path, format='pdf')
                     plt.close()
                     feature_count += 1
 
@@ -162,7 +169,7 @@ def plot_umap(data_dictionary, output_directory):
 
             # Plot umap for each outcome separately
             for outcome in range(gl.number_outcomes):
-                result_path = os.path.join(current_output_directory, f'umap_of_only_{gl.outcome_descriptors[outcome]}')
+                result_path = os.path.join(current_output_directory, f'umap_of_only_{gl.outcome_descriptors[outcome]}.pdf')
 
                 reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist)
                 embedding = reducer.fit_transform(np.reshape(x_data_per_outcome[outcome],
@@ -177,7 +184,7 @@ def plot_umap(data_dictionary, output_directory):
                 cbar.set_ticklabels(classes)
                 plt.title(gl.outcome_descriptors[outcome] + ' UMAP visualization')
                 plt.tight_layout()
-                plt.savefig(result_path, format='svg')
+                plt.savefig(result_path, format='pdf')
                 plt.close()
 
             # Plot umap of each combination of outcomes
@@ -188,7 +195,7 @@ def plot_umap(data_dictionary, output_directory):
                         continue
 
                     result_path = os.path.join(current_output_directory,
-                                               f'umap_of_{gl.outcome_descriptors[outcome_a]}_with_{gl.outcome_descriptors[outcome_b]}')
+                                               f'umap_of_{gl.outcome_descriptors[outcome_a]}_with_{gl.outcome_descriptors[outcome_b]}.pdf')
 
                     # Calculate independent and overlapping classes
                     y_tmp = np.sum(y_data_per_outcome[outcome_a] + 2 * y_data_per_outcome[outcome_b], axis=0)
@@ -210,11 +217,11 @@ def plot_umap(data_dictionary, output_directory):
                     plt.title(gl.outcome_descriptors[outcome_a] + ' and ' + gl.outcome_descriptors[outcome_b]
                               + ' UMAP visualization')
                     plt.tight_layout()
-                    plt.savefig(result_path, format='svg')
+                    plt.savefig(result_path, format='pdf')
                     plt.close()
 
             # Plot UMAP for all outcomes
-            result_path = os.path.join(current_output_directory, f'umap_of_all_outcomes')
+            result_path = os.path.join(current_output_directory, f'umap_of_all_outcomes.pdf')
 
             # Define which class combinations are occurring in the data set
             classes = ['No adverse event',
@@ -251,5 +258,5 @@ def plot_umap(data_dictionary, output_directory):
             cbar.set_ticklabels(classes)
             plt.title('UMAP visualization of all outcomes and their combinations')
             plt.tight_layout()
-            plt.savefig(result_path, format='svg')
+            plt.savefig(result_path, format='pdf')
             plt.close()

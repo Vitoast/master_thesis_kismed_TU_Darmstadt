@@ -21,7 +21,7 @@ def plot_two_gaussians(result_path):
     plt.ylabel('Probability Density')
     plt.legend()
     plt.title('Two Gaussian Distributions with Decision Boundary')
-    plt.savefig(os.path.join(result_path, "gaussian_db_example.svg"), format='svg')
+    plt.savefig(os.path.join(result_path, "gaussian_db_example.pdf"), format='pdf')
 
 
 # Example plot to explain linear regression, includes two scattered classes and boundary
@@ -39,7 +39,7 @@ def plot_linear_separation(result_path):
     plt.ylabel('Feature 2')
     plt.title('Linearly Separable Classes with Possible Decision Boundary')
     plt.legend(loc='lower right')
-    plt.savefig(os.path.join(result_path, "linear_reg_example.svg"), format='svg')
+    plt.savefig(os.path.join(result_path, "linear_reg_example.pdf"), format='pdf')
 
 
 # Create a file containing latex tables for read in CSV files

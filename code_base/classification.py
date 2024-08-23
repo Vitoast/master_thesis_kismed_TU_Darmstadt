@@ -249,7 +249,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
         plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP single class summary plot for '
                   + classification_descriptor)
         plt.tight_layout()
-        plt.savefig(shap_result_plot_path + '_single.png', bbox_inches='tight')
+        plt.savefig(shap_result_plot_path + '_single.pdf', bbox_inches='tight')
         plt.close()
 
         # Create a summary plot for a multiclass class of the test set and save it
@@ -257,7 +257,7 @@ def classify_internal(x_train, x_test, y_train, y_test, train_data_map, outcome_
         plt.title(gl.outcome_descriptors[outcome_target_index] + ' SHAP multi class summary plot for '
                   + classification_descriptor)
         plt.tight_layout()
-        plt.savefig(shap_result_plot_path + '_multi.png', bbox_inches='tight')
+        plt.savefig(shap_result_plot_path + '_multi.pdf', bbox_inches='tight')
         plt.close()
 
     # Count the occurrences of each element in the list

@@ -122,8 +122,8 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
 
             # Save plot as PNG file
             cleaned_feature_name = exp.clean_feature_name(outcome_names[outcome])
-            output_file_path = os.path.join(output_directory, f'Correlation of markers with {cleaned_feature_name}.svg')
-            plt.savefig(output_file_path, format='svg')
+            output_file_path = os.path.join(output_directory, f'Correlation of markers with {cleaned_feature_name}.pdf')
+            plt.savefig(output_file_path, format='pdf')
             plt.close()
 
     # Save correlation coefficients for all features
@@ -199,8 +199,8 @@ def compute_marker_correlation_matrix(data_dictionary, output_directory):
     sns.heatmap(corr_matrix, annot=True, fmt=".2f")
     plt.title('Correlation Matrix of Clinical Markers')
     # Save plot as PNG file
-    output_file_path = os.path.join(output_directory, f'Correlation matrix of clinical markers.svg')
-    plt.savefig(output_file_path, format='svg')
+    output_file_path = os.path.join(output_directory, f'Correlation matrix of clinical markers.pdf')
+    plt.savefig(output_file_path, format='pdf')
     plt.close()
 
 
@@ -226,8 +226,8 @@ def show_pairwise_marker_correlation(data_dictionary, output_directory):
             # Save plot as PNG file
             cleaned_feature_name = exp.clean_feature_name(marker_names[0])
             output_file_path = os.path.join(output_directory,
-                                            f'Pairwise plotting of clinical {category} markers regarding{cleaned_feature_name}.svg')
-            plt.savefig(output_file_path, format='svg')
+                                            f'Pairwise plotting of clinical {category} markers regarding{cleaned_feature_name}.pdf')
+            plt.savefig(output_file_path, format='pdf')
             plt.close()
 
 

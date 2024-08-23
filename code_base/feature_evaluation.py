@@ -79,7 +79,7 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
     plt.ylabel('F1 score')
     plt.grid(True, which='major')
     plt.tight_layout()
-    plt.savefig(result_path, format='svg')
+    plt.savefig(result_path, format='pdf')
     plt.close()
 
 
@@ -451,7 +451,7 @@ def plot_former_feature_ablation(result_directory, is_ablation=True):
                                       all_f1_scores[outcome],
                                       all_f1_scores_var[outcome],
                                       markers,
-                                      outcome_result_paths[outcome] + '_plot',
+                                      outcome_result_paths[outcome] + '_plot.pdf',
                                       gl.outcome_descriptors[outcome],
                                       study_type='accumulation')
 
@@ -518,7 +518,7 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
                     all_f1_scores[outcome][i] = f1_scores
                     all_f1_scores_var[outcome][i] = f1_score_variance
 
-        plot_save_name = os.path.join(plot_save_directory, 'combined_ablation_plot_' + model + '.svg')
+        plot_save_name = os.path.join(plot_save_directory, 'combined_ablation_plot_' + model + '.pdf')
 
         # Start plotting of the results
         plt.figure(figsize=(12, 6))
@@ -550,12 +550,13 @@ def plot_one_model_vif_and_performance_feature_ablation(result_directory, only_p
         else:
             plt.title('Performance feature ablation study plot for ' + model)
         ax.set_position([box.x0, box.y0, box.width * 1, box.height])
+        ax.set_ylim(-0.02, 0.6)
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.xlabel('Number of features left')
         plt.ylabel('F1 score')
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(plot_save_name, format='svg')
+        plt.savefig(plot_save_name, format='pdf')
         plt.close()
 
 
@@ -597,7 +598,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
 
                 # Perform feature accumulation until total of 10 features,
                 # above there was no performance gain in earlier evaluations
-                for feature_count in range(0, 20):
+                for feature_count in range(0, 1):
                     added_feature_trials = []
                     accuracy_accumulation_results = []
                     accuracy_variance_accumulation_results = []
@@ -671,9 +672,10 @@ def perform_feature_accumulation(complete_data_map, result_directory):
 
                         # Create the subplots, size depending on the number of features/ length of the legend
                         if len(marker_names_sorted) > 101:
-                            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(18, 10))
+                            fig, ax1 = plt.subplots(1, 1, figsize=(18, 8))
                         else:
-                            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
+                            # fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
+                            fig, ax1 = plt.subplots(1, 1, figsize=(14, 8))
 
                         # Scatter f1 scores
                         for i, (f1_score, f1_var, color, name) in enumerate(
@@ -695,14 +697,14 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                         ax1.grid(True)
 
                         # Scatter plot for sorted accuracies
-                        for i, (acc, acc_var, color) in enumerate(zip(accuracy_accumulation_results,
-                                                                      accuracy_variance_accumulation_results, colors)):
-                            ax2.errorbar(i, acc, acc_var, fmt='none', ecolor='black')
-                            ax2.scatter(i, acc, color=color)
-                        ax2.set_title('Accuracies corresponding to sorted features')
-                        ax2.set_xlabel('Marker')
-                        ax2.set_ylabel('Accuracy')
-                        ax2.grid(True)
+                        # for i, (acc, acc_var, color) in enumerate(zip(accuracy_accumulation_results,
+                        #                                               accuracy_variance_accumulation_results, colors)):
+                        #     ax2.errorbar(i, acc, acc_var, fmt='none', ecolor='black')
+                        #     ax2.scatter(i, acc, color=color)
+                        # ax2.set_title('Accuracies corresponding to sorted features')
+                        # ax2.set_xlabel('Marker')
+                        # ax2.set_ylabel('Accuracy')
+                        # ax2.grid(True)
 
                         # Add legend besides plots
                         fig.tight_layout()
@@ -718,16 +720,16 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                             fig.subplots_adjust(right=0.55)
                             n_col = 2
                         else:
-                            fig.subplots_adjust(right=0.7)
+                            fig.subplots_adjust(right=0.5)
                             n_col = 1
-                        plt.legend(handles, labels, bbox_to_anchor=(1.1, 2.2), loc='upper left', fontsize='small',
+                        plt.legend(handles, labels, bbox_to_anchor=(1.05, 1.0), loc='upper left', fontsize='small',
                                    ncol=n_col)
 
                         # Save plot as PNG file
                         output_file_path = os.path.join(result_directory,
                                                         f'single_feature_performance_study_'
-                                                        f'{gl.outcome_descriptors[outcome]}_{gl.classifiers[model]}.svg')
-                        plt.savefig(output_file_path, format='svg')
+                                                        f'{gl.outcome_descriptors[outcome]}_{gl.classifiers[model]}.pdf')
+                        plt.savefig(output_file_path, format='pdf')
                         plt.close()
 
                         # Save F1-Scores and accuracies for each single feature
@@ -745,5 +747,5 @@ def perform_feature_accumulation(complete_data_map, result_directory):
         # Save plot that compares classifiers for each outcome
         plot_feature_ablation_results(accuracies_per_model, accuracy_variance_per_model,
                                       f1_scores_per_model, f1_variance_per_model,
-                                      added_features[0], outcome_result_paths[outcome] + '_plot',
+                                      added_features[0], outcome_result_paths[outcome] + '_plot.pdf',
                                       gl.outcome_descriptors[outcome], 'accumulation')
