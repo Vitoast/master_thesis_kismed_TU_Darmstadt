@@ -598,7 +598,7 @@ def perform_feature_accumulation(complete_data_map, result_directory):
 
                 # Perform feature accumulation until total of 10 features,
                 # above there was no performance gain in earlier evaluations
-                for feature_count in range(0, 1):
+                for feature_count in range(0, 20):
                     added_feature_trials = []
                     accuracy_accumulation_results = []
                     accuracy_variance_accumulation_results = []
@@ -695,16 +695,6 @@ def perform_feature_accumulation(complete_data_map, result_directory):
                         ax1.set_xlabel('Marker')
                         ax1.set_ylabel('F1-Score')
                         ax1.grid(True)
-
-                        # Scatter plot for sorted accuracies
-                        # for i, (acc, acc_var, color) in enumerate(zip(accuracy_accumulation_results,
-                        #                                               accuracy_variance_accumulation_results, colors)):
-                        #     ax2.errorbar(i, acc, acc_var, fmt='none', ecolor='black')
-                        #     ax2.scatter(i, acc, color=color)
-                        # ax2.set_title('Accuracies corresponding to sorted features')
-                        # ax2.set_xlabel('Marker')
-                        # ax2.set_ylabel('Accuracy')
-                        # ax2.grid(True)
 
                         # Add legend besides plots
                         fig.tight_layout()

@@ -31,7 +31,6 @@ def explore_data(data_dictionary, output_directory):
 
     # Create file to store results
     stats_file_path = os.path.join(output_directory, 'exploration_results.txt')
-    feature_count = 0
     with open(stats_file_path, 'w') as stats_file:
         # Iterate over each feature
         for feature_name, feature_data in data_dictionary.items():
@@ -76,10 +75,11 @@ def explore_data(data_dictionary, output_directory):
                         else:
                             plt.figure(figsize=(6, 4))
                             sns.countplot(data=data_frame, x='Value', hue='Outcome (1=yes)')
-                            plt.title(f'Ratio of {feature_name}')
+                            plt.title(f'Ratio of {feature_name} for {gl.outcome_descriptors[outcome]}')
                             plt.xlabel('Outcome')
                             plt.ylabel('Occurences')
-                            output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}.pdf')
+                            output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}'
+                                                                                     f'_{gl.outcome_descriptors[outcome]}.pdf')
 
                     else:
                         plt.figure(figsize=(8, 4))
@@ -108,7 +108,6 @@ def explore_data(data_dictionary, output_directory):
                     plt.tight_layout()
                     plt.savefig(output_file_path, format='pdf')
                     plt.close()
-                    feature_count += 1
 
                     # Calculate mean and variance
                     mean = np.mean(cleaned_x_values)
