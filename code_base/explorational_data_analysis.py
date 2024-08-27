@@ -53,7 +53,7 @@ def explore_data(data_dictionary, output_directory):
 
                     data_frame = pd.DataFrame({
                         'Value': np.array(cleaned_x_values),
-                        'Outcome (1=yes)': np.array(cleaned_labels)
+                        f'Outcome {gl.outcome_descriptors[outcome]} (1=yes)': np.array(cleaned_labels)
                     })
 
                     # Determine subfolder based on feature name
@@ -62,7 +62,7 @@ def explore_data(data_dictionary, output_directory):
                         labels = ['No', 'Yes']
                         sizes = [counts[0], counts[1]]
 
-                        # Creating the pie chart
+                        # Creating the Counter chart
 
                         if feature_name in gl.original_outcome_strings:
                             plt.figure(figsize=(3, 5))
@@ -74,9 +74,9 @@ def explore_data(data_dictionary, output_directory):
                             output_file_path = os.path.join(outcome_directory, f'bar_{cleaned_feature_name}.pdf')
                         else:
                             plt.figure(figsize=(6, 4))
-                            sns.countplot(data=data_frame, x='Value', hue='Outcome (1=yes)')
+                            sns.countplot(data=data_frame, x='Value', hue=f'Outcome {gl.outcome_descriptors[outcome]} (1=yes)')
                             plt.title(f'Ratio of {feature_name} for {gl.outcome_descriptors[outcome]}')
-                            plt.xlabel('Outcome')
+                            plt.xlabel(f'Presence of {cleaned_feature_name} (1=yes)')
                             plt.ylabel('Occurences')
                             output_file_path = os.path.join(clinical_data_directory, f'hist_{cleaned_feature_name}'
                                                                                      f'_{gl.outcome_descriptors[outcome]}.pdf')
@@ -87,8 +87,8 @@ def explore_data(data_dictionary, output_directory):
                         # Create histograms using seaborn
                         # sns.histplot(data=data_frame, x='Value', hue='Outcome (1=yes)', multiple='dodge', bins=40,
                         #              kde=True, edgecolor='black', alpha=0.5)
-                        sns.kdeplot(data=data_frame, x='Value', hue='Outcome (1=yes)', shade=True, bw_adjust=0.5)
-                        sns.rugplot(data=data_frame, x='Value', hue='Outcome (1=yes)', height=0.075, lw=2)
+                        sns.kdeplot(data=data_frame, x='Value', hue=f'Outcome {gl.outcome_descriptors[outcome]} (1=yes)', shade=True, bw_adjust=0.5)
+                        sns.rugplot(data=data_frame, x='Value', hue=f'Outcome {gl.outcome_descriptors[outcome]} (1=yes)', height=0.075, lw=2)
 
                         # sns.histplot(cleaned_data, bins=20, kde=True, color='green', edgecolor='black')
                         plt.title(f'KDE and Rug plot of feature {feature_name} for outcome {gl.outcome_descriptors[outcome]}')

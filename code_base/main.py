@@ -40,7 +40,7 @@ def main():
         complete_data_map.pop('Any_adverse_outcome')
 
     # Initialize the descriptors of the adverse outcomes
-    for feature_name, feature_data in list(complete_data_map.items())[1:6]:
+    for feature_name, feature_data in list(complete_data_map.items())[1:gl.number_outcomes + 1]:
         gl.original_outcome_strings.append(feature_name)
 
     # Tune parameters to find near optimal configurations for each classifier-model combination
@@ -107,6 +107,7 @@ def main():
 
     # Do an ablation study to eliminate features from data set
     feature_evaluation_result_path = os.path.join(result_path, "feature_evaluation_results")
+    gl.scale_bad_performance_results = True
     # There are three options:
     #   1. Based on the variance inflation factor
     # fe.perform_feature_ablation_study_vif(complete_data_map, feature_evaluation_result_path)
