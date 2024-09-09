@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
-from sklearn.metrics import f1_score, roc_curve, auc
+from sklearn.metrics import f1_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -19,7 +19,7 @@ import shap
 import matplotlib.pyplot as plt
 
 import global_variables as gl
-import preprocess_data as pre
+from code_base.prediction import preprocess_data as pre
 
 # Name for Excel file with results
 result_file_name = "classification_results.xlsx"

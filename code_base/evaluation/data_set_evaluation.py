@@ -5,10 +5,9 @@ from sklearn.feature_selection import mutual_info_classif
 from scipy import stats
 
 import global_variables as gl
-import preprocess_data as pre
+from code_base.prediction import preprocess_data as pre, classification as clf
 import parameter_evaluation as pe
-import classification as clf
-import feature_evaluation as fe
+from code_base.evaluation import feature_evaluation as fe
 
 
 # This computes the mutual information (MI) between subsets of the data set and the whole data set

@@ -1,15 +1,10 @@
 import os
 
 import global_variables as gl
-import read_excel
-import explorational_data_analysis as exp
-import correlation_analysis as cor
-import preprocess_data as pre
-import classification as clf
-import feature_evaluation as fe
-import parameter_evaluation as pe
-import additional_functions as add
-import data_set_evaluation as dse
+from code_base.exploration import correlation_analysis as cor, explorational_data_analysis as exp
+from code_base.prediction import classification as clf
+from code_base.evaluation import feature_evaluation as fe, data_set_evaluation as dse, parameter_evaluation as pe
+from code_base.util import additional_functions as add, read_excel
 
 
 def main():

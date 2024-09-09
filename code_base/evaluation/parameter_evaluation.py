@@ -7,15 +7,14 @@ from skopt import BayesSearchCV
 from skopt.space import Integer, Categorical
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import make_scorer, f1_score, roc_curve, auc
+from sklearn.metrics import make_scorer, f1_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 
 import global_variables as gl
-import preprocess_data as pre
-import classification as clf
+from code_base.prediction import preprocess_data as pre, classification as clf
 
 
 # Initialize data structure to save results

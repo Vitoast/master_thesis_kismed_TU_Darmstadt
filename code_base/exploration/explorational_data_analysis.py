@@ -8,8 +8,7 @@ from collections import Counter
 import umap
 
 import global_variables as gl
-import preprocess_data as pre
-import classification as cl
+from code_base.prediction import preprocess_data as pre, classification as cl
 
 
 def clean_feature_name(feature_name):

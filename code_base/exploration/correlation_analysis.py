@@ -7,7 +7,7 @@ import seaborn as sns
 
 import global_variables as gl
 import explorational_data_analysis as exp
-import preprocess_data as pre
+from code_base.prediction import preprocess_data as pre
 
 
 # Compute point biserial correlation for each clinical marker

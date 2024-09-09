@@ -1,17 +1,14 @@
-from conda_build import post
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import csv
 import os
 
 import global_variables as gl
 import explorational_data_analysis as exp
-import preprocess_data as pre
+from code_base.prediction import preprocess_data as pre, classification as clf
 import parameter_evaluation as pe
-import classification as clf
 
 
 # Save results to Excel file
