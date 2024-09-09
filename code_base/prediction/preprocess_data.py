@@ -4,7 +4,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
-import global_variables as gl
+import code_base.global_variables as gl
 
 
 # Returns an array of booleans that tell if a point is outside the threshold * std_deviation from the median
@@ -166,6 +166,7 @@ def preprocess_data(train_data_dictionary, test_data_dictionary, outcome_target_
     return train_data_dictionary, test_data_dictionary
 
 
+# Make sure only the features of the specified subset are kept in the data
 def filter_data_sub_sets(data_map):
     # According to the global settings remove data if it should be neglected in this run
     tmp_data_map = data_map.copy()

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import global_variables as gl
+import code_base.global_variables as gl
 import explorational_data_analysis as exp
 from code_base.prediction import preprocess_data as pre
 
@@ -26,7 +26,6 @@ def compute_marker_to_outcome_correlation(data_dictionary, output_directory):
         cleaned_feature_name = exp.clean_feature_name(feature_name)
         all_feature_names.append(cleaned_feature_name)
         all_feature_data.append(feature_data)
-        # if cleaned_feature_name.endswith('PRE') or cleaned_feature_name.endswith('POST'):
         # Check if the feature data contains only numeric values
         if all(isinstance(x, (int, float)) for x in feature_data):
             if feature_count < gl.number_outcomes:
@@ -258,14 +257,22 @@ def read_correlation_file(file_path):
     return data
 
 
+# This is used to create a file that visualizes correlations to the outcomes
+#   of the PRE and POST of cardiovascular markers based on prior correlation analysis
+# Output: An excel file that maps each marker to each outcome and states only significant
+#   correlations with their P-value and whether they are higher in PRE or POST
 def sort_marker_correlation_data(result_path):
     combined_data = {}
 
+    # Prepare output content
     excel_data = {'Descriptors': []}
 
+    # Repeat for each outcome
     for outcome in gl.outcome_descriptors:
+        # Get old corr compuations from file
         current_file_path = os.path.join(result_path, outcome + '_correlation_coefficients_sorted.txt')
         data = read_correlation_file(current_file_path)
+        # Split between PRE and POST markers and remove suffix
         for descriptor, coeff, p_value in data:
             if 'PRE' in descriptor:
                 base_descriptor = descriptor[:-3]
@@ -273,6 +280,7 @@ def sort_marker_correlation_data(result_path):
             elif 'POST' in descriptor:
                 base_descriptor = descriptor[:-4]
                 suffix = descriptor[-4:]
+            # Add current marker correlation if from PRE or POST
             if 'PRE' in descriptor or 'POST' in descriptor:
                 if base_descriptor not in combined_data:
                     combined_data[base_descriptor] = {}
@@ -284,25 +292,32 @@ def sort_marker_correlation_data(result_path):
         excel_data[f'Correlation Coefficient_' + outcome] = []
         excel_data[f'P-Value_' + outcome] = []
 
+    # Now filter the markers form PRE and POST by their P-values
     for base_descriptor, suffixes in combined_data.items():
         excel_data['Descriptors'].append(base_descriptor)
+        # Iterate over outcomes
         for outcome in gl.outcome_descriptors:
+            # Initiate content with '-', stays if insignificant
             selected_type, selected_coeff, selected_pval = '-', '-', '-'
 
+            # Check if value of PRE marker is significant
             if 'PRE' in suffixes and suffixes['PRE'].get(outcome) and suffixes['PRE'][outcome][1] <= 0.05:
                 pre_coeff = suffixes['PRE'][outcome][0]
             else:
                 pre_coeff = None
 
+            # Check if value of POST marker is significant
             if 'POST' in suffixes and suffixes['POST'].get(outcome) and suffixes['POST'][outcome][1] <= 0.05:
                 post_coeff = suffixes['POST'][outcome][0]
             else:
                 post_coeff = None
 
+            # Save PRE marker version if higher correlation or POST doesnt exist
             if pre_coeff is not None and (post_coeff is None or pre_coeff > post_coeff):
                 selected_type = 'PRE'
                 selected_coeff = suffixes['PRE'][outcome][0]
                 selected_pval = suffixes['PRE'][outcome][1]
+            # Save POST marker version if higher correlation and PRE doesnt exist
             elif post_coeff is not None:
                 selected_type = 'POST'
                 selected_coeff = suffixes['POST'][outcome][0]
@@ -312,6 +327,7 @@ def sort_marker_correlation_data(result_path):
             excel_data[f'Correlation Coefficient_' + outcome].append(selected_coeff)
             excel_data[f'P-Value_' + outcome].append(selected_pval)
 
+    # Write results to new Excel file
     output_file_path = os.path.join(result_path, 'combined_ordered_markers.xlsx')
     with pd.ExcelWriter(output_file_path) as writer:
         pd.DataFrame(excel_data).to_excel(writer, index=False, sheet_name='SVD Data')

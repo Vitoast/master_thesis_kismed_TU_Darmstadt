@@ -21,7 +21,6 @@ def main():
     additional_plots_path = os.path.join(result_path, "additional_plots")
     add.plot_two_gaussians(additional_plots_path)
     add.plot_linear_separation(additional_plots_path)
-    add.create_latex_for_accumulation()
 
     # Read data from Excel file, save it in predefined split sets and the complete set
     train_data_map = read_excel.read_excel_data(train_source_path)

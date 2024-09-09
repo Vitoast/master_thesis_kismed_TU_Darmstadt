@@ -4,7 +4,7 @@ import os
 from sklearn.feature_selection import mutual_info_classif
 from scipy import stats
 
-import global_variables as gl
+import code_base.global_variables as gl
 from code_base.prediction import preprocess_data as pre, classification as clf
 import parameter_evaluation as pe
 from code_base.evaluation import feature_evaluation as fe

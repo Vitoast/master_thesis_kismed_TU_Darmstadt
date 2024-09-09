@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import csv
 import os
 
-import global_variables as gl
-import explorational_data_analysis as exp
+import code_base.global_variables as gl
+from code_base.exploration import explorational_data_analysis as exp
 from code_base.prediction import preprocess_data as pre, classification as clf
 import parameter_evaluation as pe
 
@@ -193,12 +193,6 @@ def perform_feature_ablation_study_vif(original_data_map, result_directory):
     reference_map.pop(list(reference_map.keys())[0])
     # Save length of map for later use
     number_of_features = len(list(reference_map.keys()))
-    #  !!! Temporary pop most of the map for testing !!!
-    # tmp = list(reference_map.keys())
-    # for key in list(complete_data_map.keys())[10:len(complete_data_map.keys()) - 1]:
-    #     complete_data_map.pop(key)
-    #     if key in tmp:
-    #         reference_map.pop(key)
 
     stop_iterations = False
     # Open file to save results
@@ -301,10 +295,6 @@ def continue_performance_ablation_after_vif(result_directory, result_file, compl
 # Check the features of a data set by their influence on performance and eliminate the worst in each iteration
 # Therefore train classifiers and evaluate their performance without the feature
 def perform_feature_ablation_study_performance(complete_data_map, result_directory):
-    #  !!! Temporary kick out most data to quicken debugging !!!
-    # for kickout in range(len(complete_data_map.keys()) - 1, 10, -1):
-    #     complete_data_map.pop(list(complete_data_map.keys())[kickout])
-    # Prepare data structures
     os.makedirs(result_directory, exist_ok=True)
     result_file_name = "feature_ablation_study_performance"
     result_path = os.path.join(result_directory, result_file_name)

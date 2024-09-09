@@ -7,16 +7,18 @@ import pandas as pd
 from collections import Counter
 import umap
 
-import global_variables as gl
+import code_base.global_variables as gl
 from code_base.prediction import preprocess_data as pre, classification as cl
 
 
+# Remove signs from a string that cant be contained in a file name
 def clean_feature_name(feature_name):
     # Remove invalid characters from feature name for Windows file system
     cleaned_name = re.sub(r'[<>:"/\\|?*]', '_', feature_name)
     return cleaned_name
 
 
+# Perform a data exploration to get measures and plots about each feature
 def explore_data(data_dictionary, output_directory):
     # Create output directory if it doesn't exist
     os.makedirs(output_directory, exist_ok=True)

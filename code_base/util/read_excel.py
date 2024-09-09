@@ -1,6 +1,7 @@
 import pandas as pd
 
 
+# Read the Excel files that contain the data set and return them as a dictionary
 def read_excel_data(file_path):
     # Read data from Excel file
     df = pd.read_excel(file_path, skiprows=0)

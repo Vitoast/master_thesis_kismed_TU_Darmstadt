@@ -18,7 +18,7 @@ from collections import Counter
 import shap
 import matplotlib.pyplot as plt
 
-import global_variables as gl
+import code_base.global_variables as gl
 from code_base.prediction import preprocess_data as pre
 
 # Name for Excel file with results
