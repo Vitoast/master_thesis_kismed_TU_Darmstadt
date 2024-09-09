@@ -13,6 +13,7 @@ def plot_two_gaussians(result_path):
     x = np.linspace(0, 10, 1000)
     y1 = norm.pdf(x, mean1, std1)
     y2 = norm.pdf(x, mean2, std2)
+    plt.clf()
     plt.plot(x, y1, label='Gaussian data class 1', color='red')
     plt.plot(x, y2, label='Gaussian data class 2', color='blue')
     decision_boundary = (mean1 + mean2) / 2 - 0.05
@@ -30,6 +31,7 @@ def plot_linear_separation(result_path):
     np.random.seed(0)
     class1 = np.random.randn(50, 2) + np.array([2, 2])
     class2 = np.random.randn(50, 2) + np.array([-2, -2])
+    plt.clf()
     plt.scatter(class1[:, 0], class1[:, 1], color='red', label='Class 1')
     plt.scatter(class2[:, 0], class2[:, 1], color='blue', label='Class 2')
     x_values = np.linspace(-5, 5, 100)

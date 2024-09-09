@@ -446,6 +446,9 @@ def plot_former_feature_ablation(result_directory, is_ablation=True):
         # Remove last point if it is a "" from the end of the file
         if "" in markers: markers.pop(len(markers) - 1)
 
+        if is_ablation: study_type = 'ablation'
+        else: study_type = 'accumulation'
+
         plot_feature_ablation_results(all_accuracies[outcome],
                                       all_accuracy_var[outcome],
                                       all_f1_scores[outcome],
@@ -453,7 +456,7 @@ def plot_former_feature_ablation(result_directory, is_ablation=True):
                                       markers,
                                       outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome],
-                                      study_type='ablation')
+                                      study_type=study_type)
 
 
 # In case of combined feature ablation of VIF and performance use this to plot the results of each model
