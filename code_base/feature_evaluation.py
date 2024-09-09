@@ -79,7 +79,7 @@ def plot_feature_ablation_results(accuracies_per_model, acc_variance_per_model,
     plt.ylabel('F1 score')
     plt.grid(True, which='major')
     plt.tight_layout()
-    plt.savefig(result_path, format='pdf')
+    plt.savefig(result_path + '.pdf', format='pdf')
     plt.close()
 
 
@@ -451,9 +451,9 @@ def plot_former_feature_ablation(result_directory, is_ablation=True):
                                       all_f1_scores[outcome],
                                       all_f1_scores_var[outcome],
                                       markers,
-                                      outcome_result_paths[outcome] + '_plot.pdf',
+                                      outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome],
-                                      study_type='accumulation')
+                                      study_type='ablation')
 
 
 # In case of combined feature ablation of VIF and performance use this to plot the results of each model
@@ -737,5 +737,5 @@ def perform_feature_accumulation(complete_data_map, result_directory):
         # Save plot that compares classifiers for each outcome
         plot_feature_ablation_results(accuracies_per_model, accuracy_variance_per_model,
                                       f1_scores_per_model, f1_variance_per_model,
-                                      added_features[0], outcome_result_paths[outcome] + '_plot.pdf',
+                                      added_features[0], outcome_result_paths[outcome] + '_plot',
                                       gl.outcome_descriptors[outcome], 'accumulation')

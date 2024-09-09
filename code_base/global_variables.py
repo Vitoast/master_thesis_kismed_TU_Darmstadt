@@ -2,7 +2,7 @@
 # Only the two best performing are used in the final version, uncomment the rest to use them
 classifiers = ['NaiveBayes', 'SVM']#, 'LogisticRegression', 'DecisionTree',  'RandomForest', 'XGBoost']
 # String descriptors and count of adverse outcomes for easy use
-outcome_descriptors = ["AKD", "AKI1", "LCOS", "AF"]#, "Any"]
+outcome_descriptors = ["AKD", "AKI1", "LCOS", "AF"]
 number_outcomes = len(outcome_descriptors)
 # List used to save complete descriptors of adverse outcomes in data
 original_outcome_strings = []
@@ -23,12 +23,12 @@ possible_feature_combinations = ['PRE',
                                  #'PMP',
                                  'BEFORE_DURING',
                                  'PRE_POST_BEFORE_DURING']
-                                 #'PRE_POST_BEFORE_DURING_AFTER']
 # These are the combinations of subsets that should be compared
 combinations_to_test = [['PRE', 'PRE_POST'],
                         ['POST', 'PRE_POST'],
                         ['PRE', 'PRE_PMP'],
                         ['POST', 'POST_PMP'],
+                        ['PRE_POST', 'PRE_POST_PMP'],
                         ['PRE_POST', 'PRE_POST_BEFORE_DURING'],
                         ['BEFORE_DURING', 'PRE_POST_BEFORE_DURING']]
 
