@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import code_base.global_variables as gl
-import explorational_data_analysis as exp
+import code_base.exploration.explorational_data_analysis as exp
 from code_base.prediction import preprocess_data as pre
 
 

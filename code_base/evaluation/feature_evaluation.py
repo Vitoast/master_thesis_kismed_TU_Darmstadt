@@ -8,7 +8,7 @@ import os
 import code_base.global_variables as gl
 from code_base.exploration import explorational_data_analysis as exp
 from code_base.prediction import preprocess_data as pre, classification as clf
-import parameter_evaluation as pe
+import code_base.evaluation.parameter_evaluation as pe
 
 
 # Save results to Excel file

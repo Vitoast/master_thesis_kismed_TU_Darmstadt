@@ -1,6 +1,6 @@
 import os
 
-import global_variables as gl
+import code_base.global_variables as gl
 from code_base.exploration import correlation_analysis as cor, explorational_data_analysis as exp
 from code_base.prediction import classification as clf
 from code_base.evaluation import feature_evaluation as fe, data_set_evaluation as dse, parameter_evaluation as pe
@@ -39,11 +39,7 @@ def main():
 
     # Tune parameters to find near optimal configurations for each classifier-model combination
     parameter_evaluation_result_path = os.path.join(result_path, "parameter_evaluation_results")
-    # 1. Find the good metrics for the whole set based on predefined search spaces (primitive)
-    pe.find_best_z_score_filter(complete_data_map, parameter_evaluation_result_path)
-    pe.find_best_imputation(complete_data_map, result_path)
-    pe.find_best_oversampling(complete_data_map, parameter_evaluation_result_path)
-    # 2. Use Bayesian Optimization to find good parameters for preprocessing and model configuration (elaborate)
+    # Use Bayesian Optimization to find good parameters for preprocessing and model configuration (elaborate)
     pe.bayesian_parameter_optimization_preprocessing(train_data_map, test_data_map, parameter_evaluation_result_path)
     pe.bayesian_parameter_optimization_models(train_data_map, test_data_map, parameter_evaluation_result_path)
 
